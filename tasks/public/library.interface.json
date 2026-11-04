@@ -1,0 +1,554 @@
+{
+  "requirement_id": "library",
+  "commands": [
+    {
+      "name": "reader add",
+      "args": [
+        "证号",
+        "姓名"
+      ],
+      "options": [
+        "--type"
+      ],
+      "frs": [
+        "FR-001"
+      ]
+    },
+    {
+      "name": "reader show",
+      "args": [
+        "证号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-002"
+      ]
+    },
+    {
+      "name": "reader suspend",
+      "args": [
+        "证号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-003"
+      ]
+    },
+    {
+      "name": "reader activate",
+      "args": [
+        "证号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-003"
+      ]
+    },
+    {
+      "name": "reader list",
+      "args": [],
+      "options": [],
+      "frs": [
+        "FR-004"
+      ]
+    },
+    {
+      "name": "book add",
+      "args": [
+        "书号",
+        "书名"
+      ],
+      "options": [
+        "--author",
+        "--copies"
+      ],
+      "frs": [
+        "FR-005"
+      ]
+    },
+    {
+      "name": "book add-copies",
+      "args": [
+        "书号",
+        "N"
+      ],
+      "options": [],
+      "frs": [
+        "FR-006"
+      ]
+    },
+    {
+      "name": "book remove-copies",
+      "args": [
+        "书号",
+        "N"
+      ],
+      "options": [],
+      "frs": [
+        "FR-007"
+      ]
+    },
+    {
+      "name": "book show",
+      "args": [
+        "书号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-008"
+      ]
+    },
+    {
+      "name": "book list",
+      "args": [],
+      "options": [
+        "--available"
+      ],
+      "frs": [
+        "FR-009"
+      ]
+    },
+    {
+      "name": "book search",
+      "args": [
+        "关键词"
+      ],
+      "options": [],
+      "frs": [
+        "FR-010"
+      ]
+    },
+    {
+      "name": "borrow",
+      "args": [
+        "证号",
+        "书号"
+      ],
+      "options": [
+        "--date"
+      ],
+      "frs": [
+        "FR-011"
+      ]
+    },
+    {
+      "name": "return",
+      "args": [
+        "证号",
+        "书号"
+      ],
+      "options": [
+        "--date"
+      ],
+      "frs": [
+        "FR-012"
+      ]
+    },
+    {
+      "name": "renew",
+      "args": [
+        "证号",
+        "书号"
+      ],
+      "options": [
+        "--date"
+      ],
+      "frs": [
+        "FR-013"
+      ]
+    },
+    {
+      "name": "loans",
+      "args": [
+        "证号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-014"
+      ]
+    },
+    {
+      "name": "overdue",
+      "args": [],
+      "options": [
+        "--date"
+      ],
+      "frs": [
+        "FR-015"
+      ]
+    },
+    {
+      "name": "hold",
+      "args": [
+        "证号",
+        "书号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-016"
+      ]
+    },
+    {
+      "name": "unhold",
+      "args": [
+        "证号",
+        "书号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-017"
+      ]
+    },
+    {
+      "name": "holds",
+      "args": [
+        "书号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-018"
+      ]
+    },
+    {
+      "name": "fines",
+      "args": [
+        "证号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-019"
+      ]
+    },
+    {
+      "name": "pay",
+      "args": [
+        "证号",
+        "金额"
+      ],
+      "options": [],
+      "frs": [
+        "FR-020"
+      ]
+    },
+    {
+      "name": "import readers",
+      "args": [
+        "文件"
+      ],
+      "options": [],
+      "frs": [
+        "FR-021"
+      ]
+    },
+    {
+      "name": "import books",
+      "args": [
+        "文件"
+      ],
+      "options": [],
+      "frs": [
+        "FR-022"
+      ]
+    },
+    {
+      "name": "export loans",
+      "args": [
+        "文件"
+      ],
+      "options": [],
+      "frs": [
+        "FR-023"
+      ]
+    },
+    {
+      "name": "stats",
+      "args": [],
+      "options": [],
+      "frs": [
+        "FR-024"
+      ]
+    },
+    {
+      "name": "top",
+      "args": [],
+      "options": [
+        "--limit"
+      ],
+      "frs": [
+        "FR-025"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "command": "*",
+      "message": "error: invalid date <原值>",
+      "exit": 2,
+      "frs": [
+        "R-001"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: invalid id <原值>",
+      "exit": 2,
+      "frs": [
+        "R-002"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: empty name",
+      "exit": 2,
+      "frs": [
+        "R-003"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: empty title",
+      "exit": 2,
+      "frs": [
+        "R-003"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: name too long",
+      "exit": 2,
+      "frs": [
+        "R-003"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: title too long",
+      "exit": 2,
+      "frs": [
+        "R-003"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: invalid amount <原值>",
+      "exit": 2,
+      "frs": [
+        "R-004"
+      ]
+    },
+    {
+      "command": "reader add",
+      "message": "error: reader <证号> already exists",
+      "exit": 4,
+      "frs": [
+        "FR-001"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: reader <证号> not found",
+      "exit": 3,
+      "frs": [
+        "FR-002"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: invalid copies <原值>",
+      "exit": 2,
+      "frs": [
+        "FR-005"
+      ]
+    },
+    {
+      "command": "book add",
+      "message": "error: book <书号> already exists",
+      "exit": 4,
+      "frs": [
+        "FR-005"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: book <书号> not found",
+      "exit": 3,
+      "frs": [
+        "FR-006"
+      ]
+    },
+    {
+      "command": "book remove-copies",
+      "message": "error: only <可借数> available to remove",
+      "exit": 4,
+      "frs": [
+        "FR-007"
+      ]
+    },
+    {
+      "command": "book search",
+      "message": "error: empty keyword",
+      "exit": 2,
+      "frs": [
+        "FR-010"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: reader <证号> is suspended",
+      "exit": 4,
+      "frs": [
+        "FR-011",
+        "FR-013",
+        "FR-016"
+      ]
+    },
+    {
+      "command": "borrow",
+      "message": "error: reader <证号> has overdue loans",
+      "exit": 4,
+      "frs": [
+        "FR-011"
+      ]
+    },
+    {
+      "command": "borrow",
+      "message": "error: reader <证号> has unpaid fines over 10.00",
+      "exit": 4,
+      "frs": [
+        "FR-011"
+      ]
+    },
+    {
+      "command": "borrow",
+      "message": "error: loan limit reached",
+      "exit": 4,
+      "frs": [
+        "FR-011"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: reader <证号> already has <书号>",
+      "exit": 4,
+      "frs": [
+        "FR-011",
+        "FR-016"
+      ]
+    },
+    {
+      "command": "borrow",
+      "message": "error: no copies available",
+      "exit": 4,
+      "frs": [
+        "FR-011"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: reader <证号> does not have <书号>",
+      "exit": 4,
+      "frs": [
+        "FR-012",
+        "FR-013"
+      ]
+    },
+    {
+      "command": "return",
+      "message": "error: return date before borrow date",
+      "exit": 4,
+      "frs": [
+        "FR-012"
+      ]
+    },
+    {
+      "command": "renew",
+      "message": "error: loan is overdue",
+      "exit": 4,
+      "frs": [
+        "FR-013"
+      ]
+    },
+    {
+      "command": "renew",
+      "message": "error: renewal limit reached",
+      "exit": 4,
+      "frs": [
+        "FR-013"
+      ]
+    },
+    {
+      "command": "renew",
+      "message": "error: book has pending holds",
+      "exit": 4,
+      "frs": [
+        "FR-013"
+      ]
+    },
+    {
+      "command": "hold",
+      "message": "error: reader <证号> already holds <书号>",
+      "exit": 4,
+      "frs": [
+        "FR-016"
+      ]
+    },
+    {
+      "command": "hold",
+      "message": "error: copies available, borrow instead",
+      "exit": 4,
+      "frs": [
+        "FR-016"
+      ]
+    },
+    {
+      "command": "unhold",
+      "message": "error: reader <证号> has no hold on <书号>",
+      "exit": 4,
+      "frs": [
+        "FR-017"
+      ]
+    },
+    {
+      "command": "pay",
+      "message": "error: no unpaid fines",
+      "exit": 4,
+      "frs": [
+        "FR-020"
+      ]
+    },
+    {
+      "command": "pay",
+      "message": "error: amount exceeds unpaid fines",
+      "exit": 4,
+      "frs": [
+        "FR-020"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: bad header",
+      "exit": 2,
+      "frs": [
+        "FR-021",
+        "FR-022"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: file not found: <文件>",
+      "exit": 3,
+      "frs": [
+        "FR-021",
+        "FR-022"
+      ]
+    },
+    {
+      "command": "top",
+      "message": "error: invalid limit <原值>",
+      "exit": 2,
+      "frs": [
+        "FR-025"
+      ]
+    }
+  ]
+}

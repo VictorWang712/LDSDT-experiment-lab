@@ -1,0 +1,31 @@
+{
+  "requirement_id": "wordstat",
+  "commands": [
+    {
+      "name": "count",
+      "args": [
+        "文件"
+      ],
+      "options": [],
+      "frs": [
+        "FR-001",
+        "FR-004"
+      ]
+    },
+    {
+      "name": "top",
+      "args": [
+        "文件"
+      ],
+      "options": [
+        "-k",
+        "--min-length"
+      ],
+      "frs": [
+        "FR-005",
+        "FR-006"
+      ]
+    }
+  ],
+  "errors": null
+}

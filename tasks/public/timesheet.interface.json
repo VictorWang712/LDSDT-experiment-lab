@@ -1,0 +1,335 @@
+{
+  "requirement_id": "timesheet",
+  "commands": [
+    {
+      "name": "employee add",
+      "args": [
+        "工号",
+        "姓名"
+      ],
+      "options": [
+        "--rate"
+      ],
+      "frs": [
+        "FR-001"
+      ]
+    },
+    {
+      "name": "employee list",
+      "args": [],
+      "options": [],
+      "frs": [
+        "FR-002"
+      ]
+    },
+    {
+      "name": "project add",
+      "args": [
+        "代码",
+        "名称"
+      ],
+      "options": [
+        "--budget"
+      ],
+      "frs": [
+        "FR-003"
+      ]
+    },
+    {
+      "name": "project close",
+      "args": [
+        "代码"
+      ],
+      "options": [],
+      "frs": [
+        "FR-004"
+      ]
+    },
+    {
+      "name": "project list",
+      "args": [],
+      "options": [],
+      "frs": [
+        "FR-005"
+      ]
+    },
+    {
+      "name": "log",
+      "args": [
+        "工号",
+        "项目代码",
+        "日期",
+        "开始",
+        "结束"
+      ],
+      "options": [
+        "--note"
+      ],
+      "frs": [
+        "FR-006"
+      ]
+    },
+    {
+      "name": "delete",
+      "args": [
+        "编号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-007"
+      ]
+    },
+    {
+      "name": "entries",
+      "args": [
+        "工号"
+      ],
+      "options": [
+        "--from",
+        "--to"
+      ],
+      "frs": [
+        "FR-008"
+      ]
+    },
+    {
+      "name": "import",
+      "args": [
+        "文件"
+      ],
+      "options": [],
+      "frs": [
+        "FR-009"
+      ]
+    },
+    {
+      "name": "export",
+      "args": [
+        "文件"
+      ],
+      "options": [
+        "--from",
+        "--to"
+      ],
+      "frs": [
+        "FR-010"
+      ]
+    },
+    {
+      "name": "week",
+      "args": [
+        "工号",
+        "日期"
+      ],
+      "options": [],
+      "frs": [
+        "FR-011",
+        "FR-012"
+      ]
+    },
+    {
+      "name": "pay",
+      "args": [
+        "工号",
+        "日期"
+      ],
+      "options": [],
+      "frs": [
+        "FR-013"
+      ]
+    },
+    {
+      "name": "project report",
+      "args": [
+        "代码"
+      ],
+      "options": [],
+      "frs": [
+        "FR-014"
+      ]
+    },
+    {
+      "name": "summary",
+      "args": [],
+      "options": [
+        "--from",
+        "--to"
+      ],
+      "frs": [
+        "FR-015"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "command": "*",
+      "message": "error: invalid date <原值>",
+      "exit": 2,
+      "frs": [
+        "R-001"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: invalid time <原值>",
+      "exit": 2,
+      "frs": [
+        "R-002"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: invalid id <原值>",
+      "exit": 2,
+      "frs": [
+        "R-003"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: invalid project code <原值>",
+      "exit": 2,
+      "frs": [
+        "R-003"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: empty name",
+      "exit": 2,
+      "frs": [
+        "R-003"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: zero duration",
+      "exit": 2,
+      "frs": [
+        "R-004"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: employee <工号> not found",
+      "exit": 3,
+      "frs": [
+        "R-009"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: project <代码> not found",
+      "exit": 3,
+      "frs": [
+        "R-009"
+      ]
+    },
+    {
+      "command": "employee add",
+      "message": "error: invalid rate <原值>",
+      "exit": 2,
+      "frs": [
+        "FR-001"
+      ]
+    },
+    {
+      "command": "employee add",
+      "message": "error: employee <工号> already exists",
+      "exit": 4,
+      "frs": [
+        "FR-001"
+      ]
+    },
+    {
+      "command": "project add",
+      "message": "error: invalid budget <原值>",
+      "exit": 2,
+      "frs": [
+        "FR-003"
+      ]
+    },
+    {
+      "command": "project add",
+      "message": "error: project <代码> already exists",
+      "exit": 4,
+      "frs": [
+        "FR-003"
+      ]
+    },
+    {
+      "command": "project close",
+      "message": "error: project <代码> already closed",
+      "exit": 4,
+      "frs": [
+        "FR-004"
+      ]
+    },
+    {
+      "command": "log",
+      "message": "error: project <代码> is closed",
+      "exit": 4,
+      "frs": [
+        "FR-006"
+      ]
+    },
+    {
+      "command": "log",
+      "message": "error: entry longer than 12 hours",
+      "exit": 4,
+      "frs": [
+        "FR-006"
+      ]
+    },
+    {
+      "command": "log",
+      "message": "error: overlaps entry #<编号>",
+      "exit": 4,
+      "frs": [
+        "FR-006"
+      ]
+    },
+    {
+      "command": "delete",
+      "message": "error: invalid entry <原值>",
+      "exit": 2,
+      "frs": [
+        "FR-007"
+      ]
+    },
+    {
+      "command": "delete",
+      "message": "error: entry <编号> not found",
+      "exit": 3,
+      "frs": [
+        "FR-007"
+      ]
+    },
+    {
+      "command": "*",
+      "message": "error: invalid range",
+      "exit": 2,
+      "frs": [
+        "FR-008",
+        "FR-010",
+        "FR-015"
+      ]
+    },
+    {
+      "command": "import",
+      "message": "error: bad header",
+      "exit": 2,
+      "frs": [
+        "FR-009"
+      ]
+    },
+    {
+      "command": "import",
+      "message": "error: file not found: <文件>",
+      "exit": 3,
+      "frs": [
+        "FR-009"
+      ]
+    }
+  ]
+}

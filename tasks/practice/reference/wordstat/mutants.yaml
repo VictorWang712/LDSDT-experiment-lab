@@ -1,0 +1,22 @@
+# 练习需求 wordstat 的变异体：参考实现中各注入一个公开验收场景检测不出的缺陷。
+- id: M01
+  category: 字符分类
+  file: wordstat/__main__.py
+  old: |-
+    WORD = re.compile(r"[^\W_]+")
+  new: |-
+    WORD = re.compile(r"[A-Za-z0-9一-鿿]+")
+- id: M02
+  category: 输出格式
+  file: wordstat/__main__.py
+  old: |-
+    print("\t".join([f, *map(str, s)]))
+  new: |-
+    print("\t".join([Path(f).name, *map(str, s)]))
+- id: M03
+  category: 默认值
+  file: wordstat/__main__.py
+  old: |-
+    t.add_argument("--min-length", type=int, default=0)
+  new: |-
+    t.add_argument("--min-length", type=int, default=2)

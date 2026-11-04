@@ -1,0 +1,74 @@
+# 各 Lab 自由度的选择声明。A、B 两人商定后各自填写，两个仓库中的这份文件必须一致。
+# choice 写选项名（可以是实验文档中的示例选项，也可以是自定义方案）；note 用一两句话说明理由或细节。
+# 评测只检查本 Lab 的 choice 是否填写；A/B 是否一致由官方复评检查。Lab 0 不需要填写。
+
+lab1:
+  D1.1:   # 规约语言
+    choice: ""
+    note: ""
+  D1.2:   # 生成策略
+    choice: ""
+    note: ""
+  D1.3:   # 分解方式
+    choice: ""
+    note: ""
+  D1.4:   # 校验
+    choice: ""
+    note: ""
+  D1.5:   # 歧义与规则复用
+    choice: ""
+    note: ""
+
+lab2:
+  D2.1:   # 设计表示
+    choice: ""
+    note: ""
+  D2.2:   # 决策策略
+    choice: ""
+    note: ""
+  D2.3:   # 设计粒度
+    choice: ""
+    note: ""
+  D2.4:   # 计划策略
+    choice: ""
+    note: ""
+  D2.5:   # A2 内部编排
+    choice: ""
+    note: ""
+  D2.6:   # 校验与回环
+    choice: ""
+    note: ""
+
+lab3:
+  D3.1:   # 执行计划的方式
+    choice: ""
+    note: ""
+  D3.2:   # 上下文策略
+    choice: ""
+    note: ""
+  D3.3:   # 集成
+    choice: ""
+    note: ""
+  D3.4:   # 自检循环
+    choice: ""
+    note: ""
+  D3.5:   # 落盘方式
+    choice: ""
+    note: ""
+
+lab4:
+  D4.1:   # 测试设计方法
+    choice: ""
+    note: ""
+  D4.2:   # 测试预期的来源
+    choice: ""
+    note: ""
+  D4.3:   # 失败定位与分派
+    choice: ""
+    note: ""
+  D4.4:   # 迭代控制
+    choice: ""
+    note: ""
+  D4.5:   # 修复粒度
+    choice: ""
+    note: ""

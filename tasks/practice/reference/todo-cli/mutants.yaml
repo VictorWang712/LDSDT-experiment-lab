@@ -1,0 +1,30 @@
+# 练习需求 todo-cli 的变异体：参考实现中各注入一个公开验收场景检测不出的缺陷。
+# 用 `uv run ldsdt try tasks/practice/todo-cli.md` 查看你的 A4 生成的场景能击杀几个。
+- id: M01
+  category: 输入校验
+  file: todo/__main__.py
+  old: |-
+        return dt.datetime.strptime(s, "%Y-%m-%d").date().isoformat() == s
+  new: |-
+        return bool(dt.datetime.strptime(s, "%Y-%m-%d"))
+- id: M02
+  category: 输出格式
+  file: todo/__main__.py
+  old: |-
+    due = f" (due {t['due']})" if t["due"] else ""
+  new: |-
+    due = f" (due {t['due']})" if t["due"] and not t["done"] else ""
+- id: M03
+  category: 输入处理
+  file: todo/__main__.py
+  old: |-
+    "title": args.title,
+  new: |-
+    "title": args.title.split()[0],
+- id: M04
+  category: 状态累积
+  file: todo/__main__.py
+  old: |-
+    d["next_id"] += 1
+  new: |-
+    d["next_id"] = len(d["tasks"]) + 1

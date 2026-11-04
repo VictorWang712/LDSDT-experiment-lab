@@ -1,0 +1,50 @@
+{
+  "requirement_id": "todo-cli",
+  "commands": [
+    {
+      "name": "add",
+      "args": [
+        "标题"
+      ],
+      "options": [
+        "--due"
+      ],
+      "frs": [
+        "FR-001",
+        "FR-006"
+      ]
+    },
+    {
+      "name": "list",
+      "args": [],
+      "options": [
+        "--pending"
+      ],
+      "frs": [
+        "FR-002",
+        "FR-005"
+      ]
+    },
+    {
+      "name": "done",
+      "args": [
+        "编号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-003"
+      ]
+    },
+    {
+      "name": "remove",
+      "args": [
+        "编号"
+      ],
+      "options": [],
+      "frs": [
+        "FR-004"
+      ]
+    }
+  ],
+  "errors": null
+}
