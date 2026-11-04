@@ -11,7 +11,7 @@ from pathlib import Path
 
 from . import config
 from .common import (
-    icode_version, now_iso, read_json, run_icode, session_dir, write_json, platform_label, info,
+    icode_version, now_iso, read_json, run_icode, run_icode_long, session_dir, write_json, platform_label, info,
 )
 from .reqdoc import Requirement
 
@@ -61,7 +61,7 @@ def run_task(root: Path, lab: int, req: Requirement, timeout: int, run_dir: Path
     info(f"  运行 {req.id}（上限 {timeout // 60} 分钟）……")
     started, t0 = now_iso(), time.monotonic()
     try:
-        r = run_icode(["workflow", "run", config.WORKFLOW_ID, "--trust", "--json", "--quiet",
+        r = run_icode_long(["workflow", "run", config.WORKFLOW_ID, "--trust", "--json", "--quiet",
                        "--timeout", str(timeout), "--input", workflow_input(input_md, run_dir, lab)],
                       timeout=timeout + 300)
         exit_code, stdout, stderr = r.returncode, r.stdout, r.stderr

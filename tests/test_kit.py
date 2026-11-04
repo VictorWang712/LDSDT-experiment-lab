@@ -300,3 +300,19 @@ def test_secrets():
     assert "sk-" not in secrets.redact(text, [])
     assert secrets.redact("my token is SECRETVALUE1234", ["SECRETVALUE1234"]) == "my token is [REDACTED]"
     assert not secrets.find('api_key: "{{LDSDT_QWEN_API_KEY}}"', [])
+
+
+def test_run_icode_long_kills_tree(monkeypatch):
+    """超时后结束整棵进程树并及时返回（子进程继承了输出也不会卡住）；正常结束时拿到输出。"""
+    import subprocess
+    import sys
+    import time
+    from ldsdt_kit import common
+    monkeypatch.setattr(common, "icode_exe", lambda: sys.executable)
+    r = common.run_icode_long(["-c", "print('中文 ok')"], timeout=60)
+    assert r.returncode == 0 and "中文 ok" in r.stdout
+    child = "import subprocess, sys, time; subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); time.sleep(60)"
+    t0 = time.monotonic()
+    with pytest.raises(subprocess.TimeoutExpired):
+        common.run_icode_long(["-c", child], timeout=2)
+    assert time.monotonic() - t0 < 20

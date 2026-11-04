@@ -89,6 +89,44 @@ def run_icode(args: list[str], timeout: float | None = None, env: dict | None = 
     )
 
 
+def _kill_tree(proc: subprocess.Popen) -> None:
+    """结束进程及其全部子进程（iCode 会为 Python 节点、Shell 工具再起子进程）。"""
+    try:
+        if IS_WINDOWS:
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True, timeout=60)
+        else:
+            import signal
+            os.killpg(proc.pid, signal.SIGKILL)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    try:
+        proc.kill()
+        proc.wait(timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def run_icode_long(args: list[str], timeout: float) -> subprocess.CompletedProcess:
+    """长时间运行（workflow run）。输出写临时文件而不是管道，超时或 Ctrl-C 时结束整棵进程树：
+    用管道时，Windows 上 subprocess 在超时后会一直等子孙进程关闭管道，可能卡住。超时抛出 TimeoutExpired。"""
+    import tempfile
+    exe = icode_exe()
+    if not exe:
+        die("找不到 icode 命令。请先按 Lab 0 安装 iCode：uv tool install iCode-TUI")
+    extra = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if IS_WINDOWS else {"start_new_session": True})
+    with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
+        proc = subprocess.Popen([exe, *args], stdout=out, stderr=err, stdin=subprocess.DEVNULL, **extra)
+        try:
+            code = proc.wait(timeout=timeout)
+        except BaseException:          # 超时或 KeyboardInterrupt：不留下孤儿进程
+            _kill_tree(proc)
+            raise
+        out.seek(0)
+        err.seek(0)
+        dec = lambda f: f.read().decode("utf-8", errors="replace")
+        return subprocess.CompletedProcess([exe, *args], code, dec(out), dec(err))
+
+
 def session_dir(session_id: str) -> Path:
     """iCode 会话目录名是会话 UUID 去掉连字符后的前 12 位。"""
     return chrys_dir() / "sessions" / session_id.replace("-", "")[:12]

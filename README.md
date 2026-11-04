@@ -29,6 +29,8 @@ uv run ldsdt doctor     # 只检查环境
 icode workflow run ldsdt --trust --input '{"requirement": "<需求文档的绝对路径>", "run_dir": "<输出目录的绝对路径>", "lab": 0}'
 ```
 
+Windows 上的 PowerShell 5（系统自带的 Windows PowerShell）会吃掉单引号里的双引号，上面的命令会收到不合法的 JSON。在 Windows 上请改用 `uv run ldsdt try <需求文档> --lab <N>`，它会替你拼好输入并在 `runs/try/` 下检查产物。
+
 ## 目录
 
 ```text

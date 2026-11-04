@@ -105,6 +105,8 @@ checks.report(run_dir)            # Lab 4：tests/report.json
 icode workflow run ldsdt --trust --json --input '{"requirement": "<需求绝对路径>", "run_dir": "<输出目录绝对路径>", "lab": 0}'
 ```
 
+Windows 上的 PowerShell 5（系统自带的 Windows PowerShell）会吃掉单引号里的双引号，上面的命令会收到不合法的 JSON。在 Windows 上请改用 `uv run ldsdt try <需求文档> --lab <N>`，它会替你拼好输入并在 `runs/try/` 下检查产物。
+
 - 每次运行都是一个 iCode 会话，`--json` 输出里的 `session_id` 与 `run_id` 也写在 `runs/.../run.json` 中。
 - 智能体节点的完整对话在 `~/.chrys/sessions/<会话目录>/workflows/<run_id>/nodes/<节点>@iter#*.session.*.json`（Windows 为 `%APPDATA%\chrys\sessions\...`）。会话目录名是 `session_id` 去掉连字符后的前 12 位。
 - 也可以在 iCode TUI 里打开工作流会话，逐个节点查看输入输出。
