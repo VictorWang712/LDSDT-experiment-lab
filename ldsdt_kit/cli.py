@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
 
     s = sub.add_parser("collect", help="打包本周的本地会话记录（研究用）")
     s.add_argument("--week", type=int, required=True)
-    s.add_argument("--pseudonym", help="课程分配的研究编号")
+    s.add_argument("--pseudonym", help="课程分配的个人编号")
     s.add_argument("--yes", action="store_true", help="不询问，打包全部（AiWork 默认项目中的会话除外）")
 
     args = p.parse_args(argv)

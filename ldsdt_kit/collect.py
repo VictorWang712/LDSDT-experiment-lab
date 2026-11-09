@@ -119,9 +119,9 @@ def pseudonym(root: Path, given: str | None) -> str:
     data = read_json(local, {}) or {}
     value = given or data.get("pseudonym")
     if not value:
-        value = input("请输入课程分配给你的研究编号（例如 G07-A）：").strip()
+        value = input("请输入课程分配给你的个人编号（例如 G07-A）：").strip()
     if not re.fullmatch(r"[A-Za-z0-9_-]{2,32}", value or ""):
-        die("研究编号只能包含字母、数字、下划线和连字符。")
+        die("个人编号只能包含字母、数字、下划线和连字符。")
     write_json(local, {**data, "pseudonym": value})
     return value
 
