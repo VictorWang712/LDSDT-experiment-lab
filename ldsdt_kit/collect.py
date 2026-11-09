@@ -177,5 +177,5 @@ def run(args) -> int:
                  {"week": args.week, "time": now_iso(), "excluded": len(excluded),
                   "sessions": {tool: sum(s.tool == tool for s in keep) for tool in ("icode", "aiwork")}})
     ok(f"已打包 {len(keep)} 个会话（排除 {len(excluded)} 个）：{zip_path}")
-    info("请按课程网站「C 角色指南 / 数据提交」页的说明上传该文件。不要把它提交到 Git 仓库。")
+    info(f"请把该文件上传到学在浙大的「会话记录 {args.week}」作业（截止时间与同一天的仓库提交相同）。不要把它提交到 Git 仓库。")
     return 0
