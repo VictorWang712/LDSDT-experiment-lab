@@ -1,6 +1,6 @@
 """ldsdt grade lab<N>：在本 Lab 的计分需求上运行系统，再对运行产物确定性打分。
 
-Lab 0 热身工作流；Lab 1–4 依次评 A1–A4 的产物，Lab 2 起另计「前序模块」（之前各模块的产物评分项按比例折算）。
+Lab 0 热身工作流；Lab 1–4 依次评需求分析、设计、实现、测试模块的产物，Lab 2 起另计「前序模块」（之前各模块的产物评分项按比例折算）。
 需求、验收场景与接口目录全部公开，本地评测分与官方复评一致；只有 Lab 4 的「场景有效率」与「变异体击杀率」
 需要课程组的参考实现，在官方复评中计算。超时或出错不判 0：按运行目录中已有的产物评分。
 """
@@ -28,6 +28,9 @@ A1_MAX, A2_MAX, A3_PRE_MAX = 90, 70, 30   # 各模块产物评分项的满分（
 
 
 # ------------------------------------------------------------------ 仓库级检查
+
+_MODULE_LABEL = {"A1": "需求分析", "A2": "设计", "A3": "实现", "A4": "测试"}
+
 
 def check_format_doc(root: Path, run_dir: Path) -> tuple[bool, bool | None, str]:
     """spec/FORMAT.md 是否存在；若仓库提供 validators/spec.py，则用它自证规约与声明一致。"""
@@ -228,17 +231,17 @@ def print_task(t: dict, verbose: bool) -> None:
             probs = d["report_problems"] + d["scenario_problems"] + ([d["note"]] if d.get("note") else [])
             mut = d.get("mutation")
             if mut:
-                info(f"      [A4] 有效场景 {len(mut['valid'])}/{d['scenario_count']}，"
+                info(f"      [测试] 有效场景 {len(mut['valid'])}/{d['scenario_count']}，"
                      f"击杀变异体 {len(mut['killed'])}/{len(mut['killed']) + len(mut['survived'])}；"
                      f"存活：{[(m, mut['categories'][m]) for m in mut['survived']]}")
         for p in probs[:15]:
-            info(f"      [{mod}] {p}")
+            info(f"      [{_MODULE_LABEL.get(mod, mod)}] {p}")
         cmp = d.get("interface") if isinstance(d, dict) else None
         if cmp:
             c = cmp["commands"]
-            info(f"      [A1] 接口目录·命令：缺少 {c['missing']}，多出 {c['extra']}，参数或选项不一致 {c['mismatched']}")
+            info(f"      [需求分析] 接口目录·命令：缺少 {c['missing']}，多出 {c['extra']}，参数或选项不一致 {c['mismatched']}")
             if cmp["errors"]:
-                info(f"      [A1] 接口目录·错误：缺少 {cmp['errors']['missing']}，多出 {cmp['errors']['extra']}")
+                info(f"      [需求分析] 接口目录·错误：缺少 {cmp['errors']['missing']}，多出 {cmp['errors']['extra']}")
     for s in (acc or {}).get("scenarios", []):
         if not s["passed"]:
             info(f"      {s['id']}：{'；'.join(s['failures'])}")

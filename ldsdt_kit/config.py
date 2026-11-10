@@ -25,7 +25,7 @@ MODEL_PROFILE_NAME = "ldsdt-qwen"
 WORKFLOW_ID = "ldsdt"
 AGENT_PREFIX = "ldsdt-"
 
-# 子任务：Lab 0 环境与热身工作流；Lab 1–4 依次为 A1–A4。
+# 子任务：Lab 0 环境与热身工作流；Lab 1–4 依次为需求分析、设计、实现、测试模块。
 LABS = (0, 1, 2, 3, 4)
 # 每个 Lab 单次运行（单份需求）的时长上限，秒。超时不判 0，按已有产物评分。
 LAB_TIMEOUTS = {0: 10 * 60, 1: 15 * 60, 2: 25 * 60, 3: 45 * 60, 4: 90 * 60}

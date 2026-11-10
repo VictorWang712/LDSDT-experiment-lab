@@ -1,4 +1,4 @@
-"""用参考实现与变异体评价 A4 生成的场景（tests/scenarios.yaml）。
+"""用参考实现与变异体评价测试模块生成的场景（tests/scenarios.yaml）。
 
 - 有效场景：在参考实现上通过的场景。
 - 变异体：参考实现注入一个行为缺陷后的副本，由 mutants.yaml 中的「把 old 换成 new」描述。

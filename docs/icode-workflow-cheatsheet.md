@@ -20,7 +20,7 @@ def prepare(value: WorkflowValue) -> WorkflowValue:      # Python 节点：接�
     return WorkflowValue(text="给下游智能体的消息", data={"任意": "JSON 数据"})
 
 p = wf.python("prepare", prepare, timeout=300)            # 返回 str 或 WorkflowValue
-a = wf.agent("A1", profile="ldsdt-A1", timeout=900,       # 智能体节点：profile 是 iCode 中的智能体名称
+a = wf.agent("analyst", profile="ldsdt-analyst", timeout=900,  # 智能体节点：profile 是 iCode 中的智能体名称
              retry=Retry(max_attempts=2, backoff=5),
              instructions_suffix="可选：只对这个节点追加的指令")
 ```
@@ -65,7 +65,7 @@ wf.join([task, agent], after, combine=combine)
 ```python
 def body(scope):                           # 循环体：用 scope 建节点和连线
     t = scope.python("task", make_task)
-    a = scope.agent("A1", profile="ldsdt-A1", timeout=600)
+    a = scope.agent("analyst", profile="ldsdt-analyst", timeout=600)
     c = scope.python("check", validate, timeout=600)   # validate 返回带 data["ok"] 的 WorkflowValue
     scope.edge(t, a)
     scope.join([t, a], c, combine=combine)   # combine 见第 4 节：只合并 data 与回复

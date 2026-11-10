@@ -249,7 +249,7 @@ def test_scenarios_and_report(tmp_path):
     (run_dir / "tests").mkdir(parents=True)
     assert checks.report(run_dir)
     (run_dir / "tests" / "report.json").write_text(json.dumps(
-        {"iterations": [{"round": 1, "scenarios": 3, "passed": 2, "dispatch": {"A3": 1}}]}))
+        {"iterations": [{"round": 1, "scenarios": 3, "passed": 2, "dispatch": {"impl": 1}}]}))
     assert checks.report(run_dir) == []
 
 

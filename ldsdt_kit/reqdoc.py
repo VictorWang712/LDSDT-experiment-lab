@@ -66,7 +66,7 @@ def _ids(regex: re.Pattern, text: str) -> list[str]:
 
 
 def parse_scenario_items(items) -> list[Scenario]:
-    """把 YAML 列表解析为场景。需求文档的验收场景与 A4 生成的 tests/scenarios.yaml 共用这一格式。"""
+    """把 YAML 列表解析为场景。需求文档的验收场景与测试模块生成的 tests/scenarios.yaml 共用这一格式。"""
     if not isinstance(items, list):
         raise ValueError("场景必须是 YAML 列表")
     out: list[Scenario] = []
