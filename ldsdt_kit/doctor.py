@@ -14,27 +14,38 @@ from . import config, sync
 from .common import (
     info, ok, bad, icode_version, icode_version_text, ldsdt_dir, now_iso, repo_root, run_icode, write_json, git,
 )
-from .setup_cmd import expected_profile, load_model_profiles, resolve_base_url
+from .setup_cmd import expected_profile, load_model_profiles
 
 
-def _ping_qwen(base_url: str, key: str) -> tuple[bool, str]:
+def _ping_qwen(key: str) -> tuple[bool, str]:
     body = json.dumps({
         "model": config.QWEN_MODEL_ID,
         "messages": [{"role": "user", "content": "ping"}],
         "max_tokens": 1,
     }).encode()
     req = urllib.request.Request(
-        base_url.rstrip("/") + "/chat/completions", data=body, method="POST",
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+        config.GATEWAY_BASE_URL + "/chat/completions", data=body, method="POST",
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json", **config.GATEWAY_HEADERS},
     )
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             return True, f"HTTP {resp.status}"
     except urllib.error.HTTPError as e:
-        hint = {401: "密钥无效", 403: "无权限", 404: "地址或模型 ID 错误", 429: "被限流"}.get(e.code, "")
+        hint = {401: "密钥无效", 403: "无权限或缺少请求头", 404: "地址或模型 ID 错误", 429: "被限流"}.get(e.code, "")
         return False, f"HTTP {e.code} {hint}".strip()
     except (urllib.error.URLError, TimeoutError, OSError) as e:
         return False, f"无法连接：{e}"
+
+
+def _norm(v) -> str:
+    """比较配置字段：地址去掉末尾斜杠，JSON 字符串按内容比较。"""
+    s = str(v if v is not None else "").strip().rstrip("/")
+    if s.startswith("{"):
+        try:
+            return json.dumps(json.loads(s), sort_keys=True)
+        except ValueError:
+            pass
+    return s
 
 
 def checks(root: Path, offline: bool = False) -> list[dict]:
@@ -65,28 +76,21 @@ def checks(root: Path, offline: bool = False) -> list[dict]:
 
     profiles = {str(d.get("id")): (p, d) for p, d in load_model_profiles()}
     found = profiles.get(config.MODEL_PROFILE_ID)
-    env_url = resolve_base_url(None)
-    base_url = ""
     if not found:
         add("模型配置 ldsdt-qwen", False, "不存在，请运行 `uv run ldsdt setup`")
     else:
-        base_url = str(found[1].get("base_url") or "").rstrip("/")
-        exp = expected_profile(base_url)
-        diff = [k for k in ("name", "model_id", "api_key", "max_output_tokens", "chat_options")
-                if str(found[1].get(k)) != str(exp[k])]
-        if not base_url:
-            diff.append("base_url")
-        elif env_url and env_url != base_url:
-            diff.append(f"base_url（与 {config.QWEN_BASE_URL_ENV_VAR} 不同）")
+        exp = expected_profile()
+        diff = [k for k in ("name", "model_id", "api_key", "base_url", "http_headers", "max_output_tokens", "chat_options")
+                if _norm(found[1].get(k)) != _norm(exp[k])]
         add("模型配置 ldsdt-qwen", not diff,
-            f"字段不一致：{', '.join(diff)}，请重新运行 `uv run ldsdt setup`" if diff else "已配置")  # 不输出地址：doctor.json 随仓库提交
+            f"字段不一致：{', '.join(diff)}，请重新运行 `uv run ldsdt setup`" if diff else "已配置")
 
     if offline:
         add("Qwen 接口", True, "已跳过（--offline）")
-    elif not key or not base_url:
-        add("Qwen 接口", False, "缺少密钥或地址，无法检查")
+    elif not key:
+        add("Qwen 接口", False, "缺少密钥，无法检查")
     else:
-        reachable, detail = _ping_qwen(base_url, key)
+        reachable, detail = _ping_qwen(key)
         add("Qwen 接口", reachable, detail)
 
     synced, problems = sync.status(root)

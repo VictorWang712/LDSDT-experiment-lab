@@ -4,19 +4,19 @@ from __future__ import annotations
 
 import hashlib
 
-KIT_VERSION = "0.3.1"
+KIT_VERSION = "0.3.2"
 MIN_ICODE_VERSION = (0, 35, 2)
 # 课程统一使用浙大课程特供版 iCode（命令名 icode-zju，版本号带 +zju 后缀）。
 ICODE_COMMAND = "icode-zju"
 ICODE_INSTALL = "uv tool install --python 3.14 --index-url https://1.92.199.78/pypi/simple icode-zju"
 PYTHON_MAJOR_MINOR = (3, 12)
 
-# ---- 系统内部模型：Qwen3.8-27B（百炼，小组 Key）----
+# ---- 系统内部模型：Qwen3.8-27B（浙大课程网关，小组 Key）----
 QWEN_ENV_VAR = "LDSDT_QWEN_API_KEY"
-QWEN_BASE_URL_ENV_VAR = "LDSDT_QWEN_BASE_URL"
 QWEN_MODEL_ID = "qwen3.8-27b"
-# 各组的百炼工作空间地址随小组 Key 单独分发，不写进仓库：
-# 从 `ldsdt setup --base-url` 或环境变量 LDSDT_QWEN_BASE_URL 读取。
+# 课程网关（OpenAI 兼容）。所有 Key 都走同一个地址，且每个请求都必须带下面两个请求头，否则返回 HTTP 403。
+GATEWAY_BASE_URL = "https://1.92.199.78/v1"
+GATEWAY_HEADERS = {"X-iCode-Client": "icode", "X-iCode-Tenant": "zju"}
 QWEN_MAX_CONTEXT_TOKENS = 1_000_000
 # 单次回复的输出上限与思考预算。实测（2026-11-03）不加限制时 Qwen 在大需求上一次回复可思考 10 分钟以上，
 # 连接中断后整轮重来，30 分钟内一次工具调用都没有；统一限制后各组条件相同。

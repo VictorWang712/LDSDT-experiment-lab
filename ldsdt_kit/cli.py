@@ -12,7 +12,6 @@ def main(argv: list[str] | None = None) -> int:
     sub = p.add_subparsers(dest="command", required=True)
 
     s = sub.add_parser("setup", help="生成 iCode 模型配置 ldsdt-qwen、同步智能体并检查环境")
-    s.add_argument("--base-url", help="Qwen OpenAI 兼容接口地址（默认读环境变量 LDSDT_QWEN_BASE_URL）")
     s.add_argument("--replace", action="store_true", help="把同名的已有模型配置改名备份")
     s.add_argument("--offline", action="store_true", help="不检查 Qwen 接口连通性")
 

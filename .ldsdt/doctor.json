@@ -1,0 +1,51 @@
+{
+  "time": "2026-11-10T09:31:27-05:00",
+  "passed": true,
+  "checks": [
+    {
+      "name": "Python 3.12",
+      "ok": true,
+      "detail": "当前 3.12.14"
+    },
+    {
+      "name": "uv",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Git 仓库与 origin",
+      "ok": true,
+      "detail": "git@github.com:VictorWang712/LDSDT-experiment-lab.git"
+    },
+    {
+      "name": "iCode（课程特供版）",
+      "ok": true,
+      "detail": "0.35.2+zju.6（至少 0.35.2+zju）"
+    },
+    {
+      "name": "环境变量 LDSDT_QWEN_API_KEY",
+      "ok": true,
+      "detail": "已设置"
+    },
+    {
+      "name": "模型配置 ldsdt-qwen",
+      "ok": true,
+      "detail": "已配置"
+    },
+    {
+      "name": "Qwen 接口",
+      "ok": true,
+      "detail": "HTTP 200"
+    },
+    {
+      "name": "智能体同步",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "工作流 ldsdt",
+      "ok": true,
+      "detail": "PASS ldsdt (package) · 2 nodes · 1 edge"
+    }
+  ]
+}
