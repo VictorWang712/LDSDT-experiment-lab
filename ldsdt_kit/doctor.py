@@ -12,7 +12,7 @@ from pathlib import Path
 
 from . import config, sync
 from .common import (
-    info, ok, bad, icode_version, ldsdt_dir, now_iso, repo_root, run_icode, write_json, git,
+    info, ok, bad, icode_version, icode_version_text, ldsdt_dir, now_iso, repo_root, run_icode, write_json, git,
 )
 from .setup_cmd import expected_profile, load_model_profiles, resolve_base_url
 
@@ -52,12 +52,13 @@ def checks(root: Path, offline: bool = False) -> list[dict]:
     remote = git(root, "remote", "get-url", "origin").stdout.strip() if is_repo else ""
     add("Git 仓库与 origin", is_repo and bool(remote), remote or "不是 git 仓库或没有 origin 远程")
 
-    iv = icode_version()
+    iv, ivt = icode_version(), icode_version_text()
     if iv is None:
-        add("iCode", False, "找不到 icode 命令（uv tool install iCode-TUI）")
+        add("iCode（课程特供版）", False, f"找不到 {config.ICODE_COMMAND} 命令（{config.ICODE_INSTALL}）")
     else:
         need = ".".join(map(str, config.MIN_ICODE_VERSION))
-        add("iCode", iv >= config.MIN_ICODE_VERSION, f"{'.'.join(map(str, iv))}（至少 {need}）")
+        good = iv >= config.MIN_ICODE_VERSION and "+zju" in (ivt or "")
+        add("iCode（课程特供版）", good, f"{ivt}（至少 {need}+zju）")
 
     key = os.environ.get(config.QWEN_ENV_VAR, "")
     add(f"环境变量 {config.QWEN_ENV_VAR}", bool(key), "已设置" if key else "未设置")

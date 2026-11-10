@@ -64,10 +64,12 @@ def venv_python(venv: Path) -> Path:
 # ---------------------------------------------------------------- iCode
 
 def icode_exe() -> str | None:
-    return shutil.which("icode")
+    from . import config
+    return shutil.which(config.ICODE_COMMAND)
 
 
-def icode_version() -> tuple[int, ...] | None:
+def icode_version_text() -> str | None:
+    """`icode-zju --version` 的原样输出，例如 0.35.2+zju.6；找不到命令时为 None。"""
     exe = icode_exe()
     if not exe:
         return None
@@ -75,14 +77,21 @@ def icode_version() -> tuple[int, ...] | None:
         out = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=60).stdout
     except (OSError, subprocess.TimeoutExpired):
         return None
-    m = re.search(r"(\d+)\.(\d+)\.(\d+)", out)
+    m = re.search(r"\d+\.\d+\.\d+\S*", out)
+    return m.group(0) if m else None
+
+
+def icode_version() -> tuple[int, ...] | None:
+    text = icode_version_text()
+    m = re.match(r"(\d+)\.(\d+)\.(\d+)", text or "")
     return tuple(int(x) for x in m.groups()) if m else None
 
 
 def run_icode(args: list[str], timeout: float | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
     exe = icode_exe()
     if not exe:
-        die("找不到 icode 命令。请先按 Lab 0 安装 iCode：uv tool install iCode-TUI")
+        from . import config
+        die(f"找不到 {config.ICODE_COMMAND} 命令。请先按 Lab 0 安装课程特供版 iCode：{config.ICODE_INSTALL}")
     return subprocess.run(
         [exe, *args], capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=timeout, env=env,
@@ -112,7 +121,8 @@ def run_icode_long(args: list[str], timeout: float) -> subprocess.CompletedProce
     import tempfile
     exe = icode_exe()
     if not exe:
-        die("找不到 icode 命令。请先按 Lab 0 安装 iCode：uv tool install iCode-TUI")
+        from . import config
+        die(f"找不到 {config.ICODE_COMMAND} 命令。请先按 Lab 0 安装课程特供版 iCode：{config.ICODE_INSTALL}")
     extra = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if IS_WINDOWS else {"start_new_session": True})
     with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
         proc = subprocess.Popen([exe, *args], stdout=out, stderr=err, stdin=subprocess.DEVNULL, **extra)

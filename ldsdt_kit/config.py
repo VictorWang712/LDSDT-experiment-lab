@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import hashlib
 
-KIT_VERSION = "0.3.0"
-MIN_ICODE_VERSION = (0, 33, 0)
+KIT_VERSION = "0.3.1"
+MIN_ICODE_VERSION = (0, 35, 2)
+# 课程统一使用浙大课程特供版 iCode（命令名 icode-zju，版本号带 +zju 后缀）。
+ICODE_COMMAND = "icode-zju"
+ICODE_INSTALL = "uv tool install --python 3.14 --index-url https://1.92.199.78/pypi/simple icode-zju"
 PYTHON_MAJOR_MINOR = (3, 12)
 
 # ---- 系统内部模型：Qwen3.8-27B（百炼，小组 Key）----

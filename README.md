@@ -6,7 +6,7 @@
 
 ## 快速开始
 
-需要先安装 [uv](https://docs.astral.sh/uv/) 与 iCode（`uv tool install iCode-TUI`），并把小组分到的 Qwen Key 和百炼接口地址分别设为环境变量 `LDSDT_QWEN_API_KEY`、`LDSDT_QWEN_BASE_URL`（见课程网站 Lab 0）。
+需要先安装 [uv](https://docs.astral.sh/uv/) 与课程特供版 iCode（`uv tool install --python 3.14 --index-url https://1.92.199.78/pypi/simple icode-zju`，命令名 `icode-zju`），并把小组分到的 Qwen Key 和百炼接口地址分别设为环境变量 `LDSDT_QWEN_API_KEY`、`LDSDT_QWEN_BASE_URL`（见课程网站 Lab 0）。
 
 ```bash
 uv run ldsdt setup      # 生成 iCode 模型配置 ldsdt-qwen，同步智能体，检查环境
@@ -26,7 +26,7 @@ uv run ldsdt doctor     # 只检查环境
 手动运行一次系统：
 
 ```bash
-icode workflow run ldsdt --trust --input '{"requirement": "<需求文档的绝对路径>", "run_dir": "<输出目录的绝对路径>", "lab": 0}'
+icode-zju workflow run ldsdt --trust --input '{"requirement": "<需求文档的绝对路径>", "run_dir": "<输出目录的绝对路径>", "lab": 0}'
 ```
 
 Windows 上的 PowerShell 5（系统自带的 Windows PowerShell）会吃掉单引号里的双引号，上面的命令会收到不合法的 JSON。在 Windows 上请改用 `uv run ldsdt try <需求文档> --lab <N>`，它会替你拼好输入并在 `runs/try/` 下检查产物。

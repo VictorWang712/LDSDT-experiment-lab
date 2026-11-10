@@ -11,7 +11,7 @@ from pathlib import Path
 
 from . import config
 from .common import (
-    icode_version, now_iso, read_json, run_icode, run_icode_long, session_dir, write_json, platform_label, info,
+    icode_version, icode_version_text, now_iso, read_json, run_icode, run_icode_long, session_dir, write_json, platform_label, info,
 )
 from .reqdoc import Requirement
 
@@ -84,7 +84,7 @@ def run_task(root: Path, lab: int, req: Requirement, timeout: int, run_dir: Path
         "reason": result.get("reason", ""), "failed_node": result.get("node_id", ""),
         "error": (result.get("error") or stderr.strip()[-2000:]),
         "session_id": result.get("session_id"), "run_id": result.get("run_id"),
-        "icode_version": ".".join(map(str, iv)) if iv else None,
+        "icode_version": icode_version_text() if iv else None,
         "kit_version": config.KIT_VERSION, "platform": platform_label(),
     }
     record["usage"] = collect_usage(record["session_id"], record["run_id"])

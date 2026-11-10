@@ -6,7 +6,7 @@
 """LDSDT 学生系统入口（Lab 0 起始版本：只有 Python 节点，智能体节点由你加上）。
 
 评测工具这样启动本工作流：
-    icode workflow run ldsdt --trust --json --timeout <秒> \
+    icode-zju workflow run ldsdt --trust --json --timeout <秒> \
         --input '{"requirement": "<需求文档绝对路径>", "run_dir": "<本次运行目录绝对路径>", "lab": <N>}'
 
 lab 是本次评测的子任务编号（0–4），告诉你这次需要哪些产物；也可以忽略它，总是跑完整条链。

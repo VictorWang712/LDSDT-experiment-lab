@@ -7,7 +7,7 @@
 - 工作流文件：`.chrys/workflows/ldsdt/ldsdt.py`。同一文件夹里的其他 `.py` 可以用 `from helpers import f` 导入（不能用相对导入），其他文件用 `Path(__file__).parent / "prompts" / "x.md"` 读取。
 - 文件头的脚本元数据让 Python 节点使用仓库的 `.venv`（Python 3.12，能 import `ldsdt_kit`），不要删。
 - 模块顶层必须有 `workflow = wf.build()`。顶层只放导入、函数定义和构建代码。
-- 检查能否加载：`icode workflow validate .chrys/workflows/ldsdt/ldsdt.py`（`uv run ldsdt doctor` 也会检查）。
+- 检查能否加载：`icode-zju workflow validate .chrys/workflows/ldsdt/ldsdt.py`（`uv run ldsdt doctor` 也会检查）。
 
 ## 2. 节点
 
@@ -102,7 +102,7 @@ checks.report(run_dir)            # Lab 4：tests/report.json
 ## 8. 手动运行与排错
 
 ```bash
-icode workflow run ldsdt --trust --json --input '{"requirement": "<需求绝对路径>", "run_dir": "<输出目录绝对路径>", "lab": 0}'
+icode-zju workflow run ldsdt --trust --json --input '{"requirement": "<需求绝对路径>", "run_dir": "<输出目录绝对路径>", "lab": 0}'
 ```
 
 Windows 上的 PowerShell 5（系统自带的 Windows PowerShell）会吃掉单引号里的双引号，上面的命令会收到不合法的 JSON。在 Windows 上请改用 `uv run ldsdt try <需求文档> --lab <N>`，它会替你拼好输入并在 `runs/try/` 下检查产物。
