@@ -42,7 +42,7 @@ def expected_profile() -> dict:
         "http_headers": json.dumps(config.GATEWAY_HEADERS),
         "chat_options": json.dumps(config.QWEN_CHAT_OPTIONS),
         # 只写占位符，密钥本身从环境变量读取，不落盘。
-        "api_key": "{{%s}}" % config.QWEN_ENV_VAR,
+        "api_key": "{{%s}}" % config.API_KEY_ENV_VAR,
     }
 
 
@@ -73,8 +73,8 @@ def run(args) -> int:
 
     info("== 1/3 模型配置")
     write_model_profile(args.replace)
-    if not os.environ.get(config.QWEN_ENV_VAR):
-        warn(f"环境变量 {config.QWEN_ENV_VAR} 还没有设置。按 Lab 0 设置后重新打开终端，再运行 `uv run ldsdt doctor`。")
+    if not os.environ.get(config.API_KEY_ENV_VAR):
+        warn(f"环境变量 {config.API_KEY_ENV_VAR} 还没有设置。按 Lab 0 设置后重新打开终端，再运行 `uv run ldsdt doctor`。")
     info("\n== 2/3 同步智能体")
     sync.sync_agents(verbose=True)
     info("\n== 3/3 环境检查")

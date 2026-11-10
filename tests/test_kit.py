@@ -299,7 +299,7 @@ def test_secrets():
     assert secrets.find(text, [])
     assert "sk-" not in secrets.redact(text, [])
     assert secrets.redact("my token is SECRETVALUE1234", ["SECRETVALUE1234"]) == "my token is [REDACTED]"
-    assert not secrets.find('api_key: "{{LDSDT_QWEN_API_KEY}}"', [])
+    assert not secrets.find('api_key: "{{LDSDT_API_KEY}}"', [])
 
 
 def test_run_icode_long_kills_tree(monkeypatch):

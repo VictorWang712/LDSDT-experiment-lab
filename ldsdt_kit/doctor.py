@@ -71,8 +71,8 @@ def checks(root: Path, offline: bool = False) -> list[dict]:
         good = iv >= config.MIN_ICODE_VERSION and "+zju" in (ivt or "")
         add("iCode（课程特供版）", good, f"{ivt}（至少 {need}+zju）")
 
-    key = os.environ.get(config.QWEN_ENV_VAR, "")
-    add(f"环境变量 {config.QWEN_ENV_VAR}", bool(key), "已设置" if key else "未设置")
+    key = os.environ.get(config.API_KEY_ENV_VAR, "")
+    add(f"环境变量 {config.API_KEY_ENV_VAR}", bool(key), "已设置" if key else "未设置")
 
     profiles = {str(d.get("id")): (p, d) for p, d in load_model_profiles()}
     found = profiles.get(config.MODEL_PROFILE_ID)

@@ -19,7 +19,7 @@ def known_values() -> list[str]:
     """本机上已知的密钥值：环境变量、iCode 模型配置中的明文密钥、AiWork .env 中的密钥。"""
     vals = set()
     for name, v in os.environ.items():
-        if (name == config.QWEN_ENV_VAR or re.search(r"(KEY|TOKEN|SECRET)$", name)) and len(v) >= 12:
+        if (name == config.API_KEY_ENV_VAR or re.search(r"(KEY|TOKEN|SECRET)$", name)) and len(v) >= 12:
             vals.add(v)
     try:
         from .setup_cmd import load_model_profiles

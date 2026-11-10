@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import hashlib
 
-KIT_VERSION = "0.3.2"
+KIT_VERSION = "0.3.3"
 MIN_ICODE_VERSION = (0, 35, 2)
 # 课程统一使用浙大课程特供版 iCode（命令名 icode-zju，版本号带 +zju 后缀）。
 ICODE_COMMAND = "icode-zju"
 ICODE_INSTALL = "uv tool install --python 3.14 --index-url https://1.92.199.78/pypi/simple icode-zju"
 PYTHON_MAJOR_MINOR = (3, 12)
 
-# ---- 系统内部模型：Qwen3.8-27B（浙大课程网关，小组 Key）----
-QWEN_ENV_VAR = "LDSDT_QWEN_API_KEY"
+# ---- 系统内部模型：Qwen3.8-27B（浙大课程网关）----
+# 每位学生一个课程网关 Key，同一个 Key 也用于 B 的辅助开发模型 DS-4.1-flash。
+API_KEY_ENV_VAR = "LDSDT_API_KEY"
 QWEN_MODEL_ID = "qwen3.8-27b"
 # 课程网关（OpenAI 兼容）。所有 Key 都走同一个地址，且每个请求都必须带下面两个请求头，否则返回 HTTP 403。
 GATEWAY_BASE_URL = "https://1.92.199.78/v1"
