@@ -19,6 +19,40 @@ from . import config
 IS_WINDOWS = platform.system().lower() == "windows"
 
 
+# ---------------------------------------------------------------- 环境变量
+
+# 记录 Key 的来源："env"（当前环境）、"zsh"（从交互式 zsh 的配置补读）或 ""（未找到）。
+API_KEY_SOURCE = ""
+_KEY_MARK = "__LDSDT_KEY_7f3a__"
+
+
+def ensure_api_key(shell: str = "/bin/zsh", timeout: int = 15) -> str:
+    """macOS 上从交互式 zsh 的配置（~/.zshrc）补读 LDSDT_API_KEY，写入本进程环境。
+
+    AiWork 等图形界面工具用非交互的 bash 执行命令，读不到 ~/.zshrc 中的 export；
+    补读后，本工具启动的 iCode 也能拿到 Key。Key 只放进环境变量，不打印、不写文件。
+    """
+    global API_KEY_SOURCE
+    var = config.API_KEY_ENV_VAR
+    if os.environ.get(var):
+        API_KEY_SOURCE = "env"
+        return API_KEY_SOURCE
+    API_KEY_SOURCE = ""
+    if platform.system() != "Darwin" or not Path(shell).is_file():
+        return API_KEY_SOURCE
+    script = f'printf "\\n{_KEY_MARK}%s{_KEY_MARK}\\n" "${var}"'
+    try:
+        r = subprocess.run([shell, "-i", "-c", script], stdin=subprocess.DEVNULL, capture_output=True,
+                           text=True, timeout=timeout, env=os.environ.copy())
+    except (OSError, subprocess.SubprocessError):
+        return API_KEY_SOURCE
+    m = re.search(re.escape(_KEY_MARK) + r"(.*?)" + re.escape(_KEY_MARK), r.stdout or "")
+    if m and m.group(1).strip():
+        os.environ[var] = m.group(1).strip()
+        API_KEY_SOURCE = "zsh"
+    return API_KEY_SOURCE
+
+
 # ---------------------------------------------------------------- 路径
 
 def repo_root() -> Path:

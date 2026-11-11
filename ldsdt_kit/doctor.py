@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import config, sync
+from . import common, config, sync
 from .common import (
     ensure_pull_merges, info, ok, bad, icode_version, icode_version_text, ldsdt_dir, now_iso, repo_root, run_icode,
     write_json, git,
@@ -73,7 +73,8 @@ def checks(root: Path, offline: bool = False) -> list[dict]:
         add("iCode（课程特供版）", good, f"{ivt}（至少 {need}+zju）")
 
     key = os.environ.get(config.API_KEY_ENV_VAR, "")
-    add(f"环境变量 {config.API_KEY_ENV_VAR}", bool(key), "已设置" if key else "未设置")
+    note = "已设置" + ("（从 ~/.zshrc 读取）" if common.API_KEY_SOURCE == "zsh" else "") if key else "未设置"
+    add(f"环境变量 {config.API_KEY_ENV_VAR}", bool(key), note)
 
     profiles = {str(d.get("id")): (p, d) for p, d in load_model_profiles()}
     found = profiles.get(config.MODEL_PROFILE_ID)

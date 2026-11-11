@@ -347,3 +347,25 @@ def test_ensure_pull_merges(tmp_path):
     ensure_pull_merges(tmp_path)  # 不覆盖已有设置
     got = sp.run(["git", "config", "--local", "--get", "pull.rebase"], cwd=tmp_path, capture_output=True, text=True)
     assert got.stdout.strip() == "true"
+
+
+def test_ensure_api_key(tmp_path, monkeypatch):
+    from ldsdt_kit import common
+
+    monkeypatch.setenv(config.API_KEY_ENV_VAR, "already-set-key")
+    assert common.ensure_api_key() == "env"
+
+    monkeypatch.delenv(config.API_KEY_ENV_VAR)
+    monkeypatch.setattr(common.platform, "system", lambda: "Darwin")
+    fake = tmp_path / "fakezsh"
+    fake.write_text('#!/bin/sh\necho "noise from rc"\nLDSDT_API_KEY=from-rc-key-1234\nexport LDSDT_API_KEY\nshift 2\nexec /bin/sh -c "$1"\n')
+    fake.chmod(0o755)
+    assert common.ensure_api_key(shell=str(fake)) == "zsh"
+    assert common.os.environ[config.API_KEY_ENV_VAR] == "from-rc-key-1234"
+
+    monkeypatch.delenv(config.API_KEY_ENV_VAR)
+    empty = tmp_path / "emptyzsh"
+    empty.write_text('#!/bin/sh\nshift 2\nexec /bin/sh -c "$1"\n')
+    empty.chmod(0o755)
+    assert common.ensure_api_key(shell=str(empty)) == ""
+    assert config.API_KEY_ENV_VAR not in common.os.environ

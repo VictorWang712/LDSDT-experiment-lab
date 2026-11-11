@@ -44,7 +44,9 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--yes", action="store_true", help="不询问，打包全部（AiWork 默认项目中的会话除外）")
 
     args = p.parse_args(argv)
-    from . import collect, doctor, grade, setup_cmd, submit, sync
+    from . import collect, common, doctor, grade, setup_cmd, submit, sync
+
+    common.ensure_api_key()
 
     handler = {"setup": setup_cmd.run, "doctor": doctor.run, "sync": sync.run, "grade": grade.run, "try": grade.try_run,
                "submit": submit.run, "collect": collect.run}[args.command]
