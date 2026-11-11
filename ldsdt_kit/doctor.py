@@ -12,7 +12,8 @@ from pathlib import Path
 
 from . import config, sync
 from .common import (
-    info, ok, bad, icode_version, icode_version_text, ldsdt_dir, now_iso, repo_root, run_icode, write_json, git,
+    ensure_pull_merges, info, ok, bad, icode_version, icode_version_text, ldsdt_dir, now_iso, repo_root, run_icode,
+    write_json, git,
 )
 from .setup_cmd import expected_profile, load_model_profiles
 
@@ -111,6 +112,7 @@ def checks(root: Path, offline: bool = False) -> list[dict]:
 
 def run(args) -> int:
     root = repo_root()
+    ensure_pull_merges(root)
     results = checks(root, offline=getattr(args, "offline", False))
     passed = all(r["ok"] for r in results)
     write_json(ldsdt_dir(root) / "doctor.json", {"time": now_iso(), "passed": passed, "checks": results})

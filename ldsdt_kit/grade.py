@@ -254,6 +254,7 @@ def run(args) -> int:
     timeout = args.timeout or config.LAB_TIMEOUTS[lab]
 
     info("== 环境检查")
+    doctor.ensure_pull_merges(root)
     checks_ = doctor.checks(root, offline=args.no_run)
     doctor_ok = all(c["ok"] for c in checks_)
     workflow_ok = any(c["name"] == "工作流 ldsdt" and c["ok"] for c in checks_)

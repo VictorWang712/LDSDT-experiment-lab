@@ -30,6 +30,21 @@ def repo_root() -> Path:
     die("请在实验仓库根目录（或其子目录）中运行本命令。")
 
 
+def ensure_pull_merges(root: Path) -> None:
+    """让 `git pull upstream main` 在本地已有提交时直接合并。
+
+    Git 2.27 起，本地与远程各有新提交而又没有设置 pull.rebase 时，git pull 会报
+    「Need to specify how to reconcile divergent branches」并停止。学生提交过 Lab 后再拉取课程更新就是这种情况。
+    只在本仓库未设置时写入（仓库级配置），不改用户已有的选择。
+    """
+    try:
+        cur = subprocess.run(["git", "config", "--get", "pull.rebase"], cwd=root, capture_output=True, text=True)
+        if cur.returncode == 1 and not cur.stdout.strip():
+            subprocess.run(["git", "config", "--local", "pull.rebase", "false"], cwd=root, capture_output=True)
+    except OSError:
+        pass
+
+
 def chrys_dir() -> Path:
     if IS_WINDOWS:
         return Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / "chrys"

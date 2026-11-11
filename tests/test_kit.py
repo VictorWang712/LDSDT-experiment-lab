@@ -334,3 +334,16 @@ def test_collect_icode_recovery_only(tmp_path, monkeypatch):
     monkeypatch.setattr(collect, "chrys_dir", lambda: home)
     found = sorted(s.sid for s in collect.icode_sessions(repo))
     assert found == ["aaa", "bbb"]
+
+
+def test_ensure_pull_merges(tmp_path):
+    import subprocess as sp
+    from ldsdt_kit.common import ensure_pull_merges
+    sp.run(["git", "init", "-q", str(tmp_path)], check=True)
+    ensure_pull_merges(tmp_path)
+    got = sp.run(["git", "config", "--local", "--get", "pull.rebase"], cwd=tmp_path, capture_output=True, text=True)
+    assert got.stdout.strip() == "false"
+    sp.run(["git", "config", "--local", "pull.rebase", "true"], cwd=tmp_path, check=True)
+    ensure_pull_merges(tmp_path)  # 不覆盖已有设置
+    got = sp.run(["git", "config", "--local", "--get", "pull.rebase"], cwd=tmp_path, capture_output=True, text=True)
+    assert got.stdout.strip() == "true"
