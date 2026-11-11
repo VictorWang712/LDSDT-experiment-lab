@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 
-KIT_VERSION = "0.3.5"
+KIT_VERSION = "0.3.6"
 MIN_ICODE_VERSION = (0, 35, 2)
 # 课程统一使用浙大课程特供版 iCode（命令名 icode-zju，版本号带 +zju 后缀）。
 ICODE_COMMAND = "icode-zju"
@@ -19,10 +19,11 @@ QWEN_MODEL_ID = "qwen3.8-27b"
 GATEWAY_BASE_URL = "https://1.92.199.78/v1"
 GATEWAY_HEADERS = {"X-iCode-Client": "icode", "X-iCode-Tenant": "zju"}
 QWEN_MAX_CONTEXT_TOKENS = 1_000_000
-# 单次回复的输出上限与思考预算。实测（2026-11-03）不加限制时 Qwen 在大需求上一次回复可思考 10 分钟以上，
+# 单次回复的输出上限与思考强度。实测（2026-11-03）不加限制时 Qwen 在大需求上一次回复可思考 10 分钟以上，
 # 连接中断后整轮重来，30 分钟内一次工具调用都没有；统一限制后各组条件相同。
+# 课程网关不支持 thinking_budget（会被忽略），改用 reasoning_effort（2026-11-11 实测 medium 与原来的 4096 相当）。
 QWEN_MAX_OUTPUT_TOKENS = 32_000
-QWEN_CHAT_OPTIONS = {"extra_body": {"thinking_budget": 4096}}
+QWEN_CHAT_OPTIONS = {"reasoning_effort": "medium"}
 MODEL_PROFILE_NAME = "ldsdt-qwen"
 
 # ---- 学生系统 ----
