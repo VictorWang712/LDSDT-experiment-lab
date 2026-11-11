@@ -316,3 +316,21 @@ def test_run_icode_long_kills_tree(monkeypatch):
     with pytest.raises(subprocess.TimeoutExpired):
         common.run_icode_long(["-c", child], timeout=2)
     assert time.monotonic() - t0 < 20
+
+
+def test_collect_icode_recovery_only(tmp_path, monkeypatch):
+    """iCode 被直接关掉时只有 session.recovery.json，collect 也要找到这个会话。"""
+    import json as _json
+    from ldsdt_kit import collect
+    home, repo = tmp_path / "chrys", tmp_path / "repo"
+    repo.mkdir()
+    for sid, name in (("aaa", "session.json"), ("bbb", "session.recovery.json"), ("ccc", "session.json")):
+        d = home / "sessions" / sid
+        (d / "trajectory").mkdir(parents=True)
+        cwd = str(repo) if sid != "ccc" else str(tmp_path / "elsewhere")
+        (d / name).write_text(_json.dumps({"meta": {"primary_cwd": cwd, "kind": "chat", "title": sid}}))
+        (d / "trajectory" / "events.jsonl").write_text("{}\n")
+    (home / "sessions" / "attribution").mkdir()
+    monkeypatch.setattr(collect, "chrys_dir", lambda: home)
+    found = sorted(s.sid for s in collect.icode_sessions(repo))
+    assert found == ["aaa", "bbb"]

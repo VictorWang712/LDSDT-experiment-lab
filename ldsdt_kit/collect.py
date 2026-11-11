@@ -39,12 +39,15 @@ class Session:
 def icode_sessions(root: Path) -> list[Session]:
     out = []
     base = chrys_dir() / "sessions"
-    for sj in sorted(base.glob("*/session.json")):
+    for sdir in sorted(d for d in base.glob("*") if d.is_dir()):
+        # iCode 正常退出时写 session.json；终端被直接关掉、进程被杀时只留下 session.recovery.json。
+        sj = next((sdir / n for n in ("session.json", "session.recovery.json") if (sdir / n).is_file()), None)
+        if sj is None:
+            continue
         meta = (read_json(sj, {}) or {}).get("meta") or {}
         dirs = [meta.get("primary_cwd") or ""] + list(meta.get("working_dirs") or [])
         if not any(d and is_within(d, root) for d in dirs):
             continue
-        sdir = sj.parent
         files = []
         for p in sorted(sdir.rglob("*")):
             rel = p.relative_to(sdir)
