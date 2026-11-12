@@ -23,6 +23,17 @@ AIWORK_DEFAULT_PROJECT = Path.home() / ".dtcoder-external" / "default_project"
 SHA_RE = re.compile(r"\b[0-9a-f]{64}\b")
 
 
+def local_time(value: str) -> str:
+    """把 ISO 时间（iCode 记录的是 UTC）换成本机时区显示；无法解析时原样返回。"""
+    try:
+        t = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return str(value)
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return t.astimezone().isoformat(timespec="seconds")
+
+
 @dataclass
 class Session:
     tool: str               # icode / aiwork
@@ -32,6 +43,7 @@ class Session:
     cwd: str
     files: list[tuple[Path, str]] = field(default_factory=list)  # (源文件, 包内路径)
     needs_confirm: bool = False
+    kind: str = ""          # iCode：chat（交互对话）/ workflow（工作流运行）；AiWork 为空
 
 
 # ------------------------------------------------------------------ iCode
@@ -54,7 +66,7 @@ def icode_sessions(root: Path) -> list[Session]:
             if p.is_file() and rel.parts[0] != "snapshots" and not p.name.endswith((".lock", ".bak")):
                 files.append((p, f"icode/{sdir.name}/{rel.as_posix()}"))
         out.append(Session("icode", sdir.name, f"[{meta.get('kind', '?')}] {meta.get('title', '')}",
-                           str(meta.get("updated_at", "")), dirs[0], files))
+                           local_time(meta.get("updated_at", "")), dirs[0], files, kind=str(meta.get("kind") or "")))
     return out
 
 
@@ -136,7 +148,8 @@ def choose(sessions: list[Session], assume_yes: bool) -> tuple[list[Session], li
         info(f"  {i:>3}. {s.tool:<6} {s.updated[:16]:<16} {s.title[:40]}{flag}")
     if assume_yes:
         return [s for s in sessions if not s.needs_confirm], [s.sid for s in sessions if s.needs_confirm]
-    info("\n标为「需确认」的会话来自 AiWork 的默认项目目录，只有与本课程有关时才应打包。")
+    if any(s.needs_confirm for s in sessions):
+        info("\n标为「需确认」的会话来自 AiWork 的默认项目目录，只有与本课程有关时才应打包。")
     raw = input("输入要排除的编号（空格分隔），直接回车表示全部打包：").strip()
     drop = {int(x) for x in raw.split() if x.isdigit()}
     keep = [s for i, s in enumerate(sessions, 1) if i not in drop]
@@ -178,7 +191,8 @@ def run(args) -> int:
     # 随仓库提交的收集记录只有数量，不含研究编号与内容；Lab 0 用它确认 collect 已经跑通。
     append_jsonl(ldsdt_dir(root) / "collect-log.jsonl",
                  {"week": args.week, "time": now_iso(), "excluded": len(excluded),
-                  "sessions": {tool: sum(s.tool == tool for s in keep) for tool in ("icode", "aiwork")}})
+                  "sessions": {tool: sum(s.tool == tool for s in keep) for tool in ("icode", "aiwork")},
+                  "icode_chat": sum(s.tool == "icode" and s.kind == "chat" for s in keep)})
     ok(f"已打包 {len(keep)} 个会话（排除 {len(excluded)} 个）：{zip_path}")
     info(f"请把该文件上传到学在浙大的「会话记录 {args.week}」作业（截止时间与同一天的仓库提交相同）。不要把它提交到 Git 仓库。")
     return 0

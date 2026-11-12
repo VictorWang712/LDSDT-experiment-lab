@@ -14,7 +14,8 @@ lab 是本次评测的子任务编号（0–4），告诉你这次需要哪些�
 固定契约（不要改）：
   - 工作流 ID 为 ldsdt（即本文件夹名），模块顶层必须有 `workflow = wf.build()`；
   - 起点节点接收上面的 JSON 文本；
-  - 各 Lab 要求的产物写在 run_dir 下（Lab 0 是 warmup/fr-list.json，见课程网站）。
+  - 各 Lab 要求的产物写在 run_dir 下（Lab 0 是 warmup/fr-list.json，见课程网站）；
+  - 不得导入或调用课程工具包 ldsdt_kit（包括运行 `ldsdt` 命令），评测运行时导入会直接失败。
 其余部分（节点划分、提示词、校验、循环……）由你设计。工作流 API 见 docs/icode-workflow-cheatsheet.md。
 """
 

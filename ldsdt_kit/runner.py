@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -63,7 +64,7 @@ def run_task(root: Path, lab: int, req: Requirement, timeout: int, run_dir: Path
     try:
         r = run_icode_long(["workflow", "run", config.WORKFLOW_ID, "--trust", "--json", "--quiet",
                        "--timeout", str(timeout), "--input", workflow_input(input_md, run_dir, lab)],
-                      timeout=timeout + 300)
+                      timeout=timeout + 300, env={**os.environ, config.SYSTEM_RUN_ENV: "1"})
         exit_code, stdout, stderr = r.returncode, r.stdout, r.stderr
     except subprocess.TimeoutExpired:
         exit_code, stdout, stderr = 124, "", "ldsdt: iCode 未在时限内退出"

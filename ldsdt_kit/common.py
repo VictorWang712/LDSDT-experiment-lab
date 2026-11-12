@@ -21,15 +21,54 @@ IS_WINDOWS = platform.system().lower() == "windows"
 
 # ---------------------------------------------------------------- 环境变量
 
-# 记录 Key 的来源："env"（当前环境）、"zsh"（从交互式 zsh 的配置补读）或 ""（未找到）。
+# 记录 Key 的来源："env"（当前环境）、"zsh"（macOS 上从交互式 zsh 的配置补读）、
+# "registry"（Windows 上从注册表中的用户或系统环境变量补读）或 ""（未找到）。
 API_KEY_SOURCE = ""
 _KEY_MARK = "__LDSDT_KEY_7f3a__"
+_WIN_ENV_KEYS = (
+    ("HKEY_CURRENT_USER", "Environment"),
+    ("HKEY_LOCAL_MACHINE", r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+)
+
+
+def _key_from_zsh(var: str, shell: str, timeout: int) -> str:
+    if not Path(shell).is_file():
+        return ""
+    script = f'printf "\\n{_KEY_MARK}%s{_KEY_MARK}\\n" "${var}"'
+    try:
+        r = subprocess.run([shell, "-i", "-c", script], stdin=subprocess.DEVNULL, capture_output=True,
+                           text=True, timeout=timeout, env=os.environ.copy())
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    m = re.search(re.escape(_KEY_MARK) + r"(.*?)" + re.escape(_KEY_MARK), r.stdout or "")
+    return m.group(1).strip() if m else ""
+
+
+def _key_from_registry(var: str) -> str:
+    try:
+        import winreg
+    except ImportError:
+        return ""
+    for hive, sub in _WIN_ENV_KEYS:
+        try:
+            with winreg.OpenKey(getattr(winreg, hive), sub) as k:
+                value, kind = winreg.QueryValueEx(k, var)
+        except OSError:
+            continue
+        value = str(value or "")
+        if kind == getattr(winreg, "REG_EXPAND_SZ", -1):
+            value = os.path.expandvars(value)
+        if value.strip():
+            return value.strip()
+    return ""
 
 
 def ensure_api_key(shell: str = "/bin/zsh", timeout: int = 15) -> str:
-    """macOS 上从交互式 zsh 的配置（~/.zshrc）补读 LDSDT_API_KEY，写入本进程环境。
+    """当前环境没有 LDSDT_API_KEY 时，从系统保存的位置补读，写入本进程环境。
 
-    AiWork 等图形界面工具用非交互的 bash 执行命令，读不到 ~/.zshrc 中的 export；
+    - macOS：AiWork 等图形界面工具用非交互的 bash 执行命令，读不到 ~/.zshrc 中的 export，
+      这里用交互式 zsh 读出。
+    - Windows：AiWork 执行的命令不继承用户环境变量，这里从注册表读取「编辑账户的环境变量」中设置的值。
     补读后，本工具启动的 iCode 也能拿到 Key。Key 只放进环境变量，不打印、不写文件。
     """
     global API_KEY_SOURCE
@@ -38,18 +77,15 @@ def ensure_api_key(shell: str = "/bin/zsh", timeout: int = 15) -> str:
         API_KEY_SOURCE = "env"
         return API_KEY_SOURCE
     API_KEY_SOURCE = ""
-    if platform.system() != "Darwin" or not Path(shell).is_file():
-        return API_KEY_SOURCE
-    script = f'printf "\\n{_KEY_MARK}%s{_KEY_MARK}\\n" "${var}"'
-    try:
-        r = subprocess.run([shell, "-i", "-c", script], stdin=subprocess.DEVNULL, capture_output=True,
-                           text=True, timeout=timeout, env=os.environ.copy())
-    except (OSError, subprocess.SubprocessError):
-        return API_KEY_SOURCE
-    m = re.search(re.escape(_KEY_MARK) + r"(.*?)" + re.escape(_KEY_MARK), r.stdout or "")
-    if m and m.group(1).strip():
-        os.environ[var] = m.group(1).strip()
-        API_KEY_SOURCE = "zsh"
+    if IS_WINDOWS:
+        value, source = _key_from_registry(var), "registry"
+    elif platform.system() == "Darwin":
+        value, source = _key_from_zsh(var, shell, timeout), "zsh"
+    else:
+        value, source = "", ""
+    if value:
+        os.environ[var] = value
+        API_KEY_SOURCE = source
     return API_KEY_SOURCE
 
 
@@ -95,14 +131,28 @@ def ldsdt_dir(root: Path) -> Path:
     return d
 
 
+def strip_extended_prefix(path: str) -> str:
+    """去掉 Windows 扩展长度路径前缀：\\\\?\\UNC\\server\\x → \\\\server\\x，\\\\?\\D:\\x → D:\\x。
+
+    AiWork 在 Windows 上记录的工作目录带这个前缀，Path.resolve() 不会去掉它，直接比较会失败。
+    """
+    s = str(path)
+    if s.startswith("\\\\?\\UNC\\"):
+        return "\\\\" + s[8:]
+    if s.startswith("\\\\?\\") or s.startswith("\\\\.\\"):
+        return s[4:]
+    return s
+
+
 def is_within(path: str | Path, root: Path) -> bool:
     try:
-        p = Path(path).resolve()
+        p = Path(strip_extended_prefix(str(path))).resolve()
+        r = Path(strip_extended_prefix(str(root))).resolve()
     except OSError:
         return False
-    r = root.resolve()
     if IS_WINDOWS:
-        return str(p).lower() == str(r).lower() or str(p).lower().startswith(str(r).lower() + os.sep)
+        ps, rs = strip_extended_prefix(str(p)).lower(), strip_extended_prefix(str(r)).lower()
+        return ps == rs or ps.startswith(rs.rstrip("\\") + "\\")
     return p == r or r in p.parents
 
 
@@ -164,7 +214,7 @@ def _kill_tree(proc: subprocess.Popen) -> None:
         pass
 
 
-def run_icode_long(args: list[str], timeout: float) -> subprocess.CompletedProcess:
+def run_icode_long(args: list[str], timeout: float, env: dict | None = None) -> subprocess.CompletedProcess:
     """长时间运行（workflow run）。输出写临时文件而不是管道，超时或 Ctrl-C 时结束整棵进程树：
     用管道时，Windows 上 subprocess 在超时后会一直等子孙进程关闭管道，可能卡住。超时抛出 TimeoutExpired。"""
     import tempfile
@@ -174,7 +224,7 @@ def run_icode_long(args: list[str], timeout: float) -> subprocess.CompletedProce
         die(f"找不到 {config.ICODE_COMMAND} 命令。请先按 Lab 0 安装课程特供版 iCode：{config.ICODE_INSTALL}")
     extra = ({"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if IS_WINDOWS else {"start_new_session": True})
     with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
-        proc = subprocess.Popen([exe, *args], stdout=out, stderr=err, stdin=subprocess.DEVNULL, **extra)
+        proc = subprocess.Popen([exe, *args], stdout=out, stderr=err, stdin=subprocess.DEVNULL, env=env, **extra)
         try:
             code = proc.wait(timeout=timeout)
         except BaseException:          # 超时或 KeyboardInterrupt：不留下孤儿进程
@@ -189,6 +239,40 @@ def run_icode_long(args: list[str], timeout: float) -> subprocess.CompletedProce
 def session_dir(session_id: str) -> Path:
     """iCode 会话目录名是会话 UUID 去掉连字符后的前 12 位。"""
     return chrys_dir() / "sessions" / session_id.replace("-", "")[:12]
+
+
+# ---------------------------------------------------------------- 学生系统不得调用评测工具
+
+# 扫描这些目录下的全部文本文件，以及仓库中其他位置的 .py 文件；课程提供的目录与说明文件不扫描。
+_SCAN_DIRS = (".chrys", "agents", "prompts", "skills", "src", "validators")
+_SKIP_DIRS = ("ldsdt_kit", "tests", "tasks", "docs", "research", "runs", ".ldsdt", ".venv")
+_SKIP_FILES = {"agents/README.md"}
+_SCAN_SUFFIXES = {".py", ".yaml", ".yml", ".json", ".toml", ".md", ".txt", ".sh", ".ps1", ".cfg", ".ini"}
+# 代码中的导入与引用：import / from 语句、ldsdt_kit.xxx、字符串 "ldsdt_kit"（importlib）。
+# 只是在说明文字里提到 ldsdt_kit（例如「不要使用 ldsdt_kit」）不算；绕过静态检查的写法由运行期限制拦下。
+_KIT_REF = re.compile(r"\b(?:from|import)\s+ldsdt_kit\b|\bldsdt_kit\.\w|[\"']ldsdt_kit[\"'.]")
+
+
+def find_kit_usage(root: Path) -> list[str]:
+    """返回引用了评测工具 ldsdt_kit 的学生文件（相对路径）。评测运行时另有运行期限制，这里给出早期提示。"""
+    r = git(root, "ls-files", "--cached", "--others", "--exclude-standard", "-z")
+    names = [n for n in r.stdout.split("\0") if n] if r.returncode == 0 else [
+        p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()]
+    hits = []
+    for name in sorted(set(names)):
+        parts = name.split("/")
+        if parts[0] in _SKIP_DIRS or name in _SKIP_FILES:
+            continue
+        suffix = Path(name).suffix.lower()
+        if not ((parts[0] in _SCAN_DIRS and suffix in _SCAN_SUFFIXES) or suffix == ".py"):
+            continue
+        try:
+            text = (root / name).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if _KIT_REF.search(text):
+            hits.append(name)
+    return hits
 
 
 # ---------------------------------------------------------------- 杂项

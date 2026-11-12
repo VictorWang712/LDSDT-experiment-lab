@@ -8,6 +8,7 @@ Lab 0 热身工作流；Lab 1–4 依次评需求分析、设计、实现、测�
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +18,7 @@ import yaml
 from . import checks, config, doctor, interface, sync
 from .acceptance import evaluate
 from .common import (
-    append_jsonl, bad, die, git_state, info, kit_hash, ldsdt_dir, now_iso, ok, platform_label,
+    append_jsonl, bad, die, find_kit_usage, git, git_state, info, kit_hash, ldsdt_dir, now_iso, ok, platform_label,
     read_json, repo_root, warn, write_json,
 )
 from .mutants import evaluate_tests, find_reference
@@ -57,18 +58,44 @@ def check_design_choices(root: Path, lab: int) -> tuple[bool, list[str]]:
     return not missing, [f"design-choices.yaml：lab{lab}.{d}.choice 未填写" for d in missing]
 
 
-def check_collect(root: Path) -> bool:
-    """Lab 0：.ldsdt/collect-log.jsonl 中至少有一次收集到会话。"""
+def repo_role(root: Path) -> str | None:
+    """A / B：先看 origin 仓库名（<组号>-aiwork / <组号>-icode），再看 collect 记下的个人编号（G05-A）。"""
+    url = git(root, "remote", "get-url", "origin").stdout.strip()
+    m = re.search(r"-(aiwork|icode)(?:\.git)?/?$", url, re.IGNORECASE)
+    if m:
+        return "A" if m.group(1).lower() == "aiwork" else "B"
+    name = str((read_json(root / ".ldsdt" / "local.json", {}) or {}).get("pseudonym") or "")
+    m = re.search(r"-([AB])$", name, re.IGNORECASE)
+    return m.group(1).upper() if m else None
+
+
+COLLECT_NEEDS = {
+    "A": "至少一个 AiWork 会话（在 AiWork「编码 → 项目」中打开本仓库后工作）",
+    "B": "至少一个 iCode 对话会话（在本仓库中启动 icode-zju 与 DS-4.1-flash 对话；`ldsdt try` 产生的工作流会话不算）",
+    None: "至少一个 AiWork 会话或 iCode 对话会话（工作流运行产生的会话不算）",
+}
+
+
+def check_collect(root: Path) -> tuple[bool, str]:
+    """Lab 0：.ldsdt/collect-log.jsonl 中至少有一次收集到本角色辅助工具的会话。
+
+    A 要求 AiWork 会话，B 要求 iCode 对话（chat）会话；只靠评测运行产生的工作流会话不算。
+    """
+    role = repo_role(root)
+    need = COLLECT_NEEDS[role]
     p = root / ".ldsdt" / "collect-log.jsonl"
     if not p.is_file():
-        return False
+        return False, need
     for line in p.read_text(encoding="utf-8").splitlines():
         try:
-            if sum((json.loads(line).get("sessions") or {}).values()) > 0:
-                return True
+            entry = json.loads(line)
+            aiwork = int((entry.get("sessions") or {}).get("aiwork") or 0)
+            chat = int(entry.get("icode_chat") or 0)
         except (ValueError, AttributeError, TypeError):
             continue
-    return False
+        if (role == "A" and aiwork) or (role == "B" and chat) or (role is None and (aiwork or chat)):
+            return True, need
+    return False, need
 
 
 # ------------------------------------------------------------------ 各模块
@@ -173,9 +200,10 @@ def score_task(root: Path, lab: int, req: Requirement, run_dir: Path) -> dict:
 
 
 def aggregate(lab: int, tasks: list[dict], doctor_ok: bool, workflow_ok: bool,
-              design: tuple[bool, list[str]], root: Path | None = None) -> dict:
-    """门槛：工作流能加载，且每份计分需求都启动过运行（有 run.json）。超时、出错的运行照常按产物计分。"""
-    gate = workflow_ok and bool(tasks) and all(t["outcome"] != "missing" for t in tasks)
+              design: tuple[bool, list[str]], root: Path | None = None, kit_free: bool = True) -> dict:
+    """门槛：工作流能加载，系统不引用评测工具，且每份计分需求都启动过运行（有 run.json）。
+    超时、出错的运行照常按产物计分。"""
+    gate = workflow_ok and kit_free and bool(tasks) and all(t["outcome"] != "missing" for t in tasks)
     per_task: dict[str, float] = {}
     for t in tasks:
         for k, v in t["points"].items():
@@ -184,7 +212,7 @@ def aggregate(lab: int, tasks: list[dict], doctor_ok: bool, workflow_ok: bool,
     repo_level: dict[str, float] = {}
     if lab == 0:
         repo_level["doctor"] = 30 * doctor_ok
-        repo_level["collect"] = 10 * (check_collect(root) if root else False)
+        repo_level["collect"] = 10 * (check_collect(root)[0] if root else False)
     else:
         repo_level["design_choices"] = 10 * design[0]
     breakdown = {k: round(v, 2) for k, v in {**repo_level, **per_task}.items()}
@@ -258,6 +286,8 @@ def run(args) -> int:
     checks_ = doctor.checks(root, offline=args.no_run)
     doctor_ok = all(c["ok"] for c in checks_)
     workflow_ok = any(c["name"] == "工作流 ldsdt" and c["ok"] for c in checks_)
+    kit_free = all(c["ok"] for c in checks_ if c["name"] == "系统不调用评测工具")
+    gateway_busy = any(c.get("warning") for c in checks_ if c["name"] == "Qwen 接口")
 
     if not args.no_run:
         info("\n== 同步智能体")
@@ -281,7 +311,7 @@ def run(args) -> int:
         print_task(t, args.verbose)
 
     design = check_design_choices(root, lab)
-    result = aggregate(lab, tasks, doctor_ok, workflow_ok, design, root)
+    result = aggregate(lab, tasks, doctor_ok, workflow_ok, design, root, kit_free=kit_free)
     report = {
         "lab": lab, "time": now_iso(), "no_run": args.no_run, "platform": platform_label(),
         "kit_version": config.KIT_VERSION, "kit_hash": kit_hash(root), "git": git_state(root),
@@ -303,13 +333,18 @@ def run(args) -> int:
         rest = f"，另有 {sum(PENDING_MAX[k] for k in result['pending'])} 分在官方复评中计算" if result["pending"] else ""
         info(f"\n评测分：{result['total']:.2f} / 100{rest}（可以 `uv run ldsdt submit lab{lab}`）")
     else:
-        warn("门槛未通过：工作流必须能加载（doctor 中「工作流 ldsdt」通过），并在每份计分需求上都运行过，否则评测分为 0。")
+        warn("门槛未通过：工作流必须能加载（doctor 中「工作流 ldsdt」通过），系统不得引用评测工具 ldsdt_kit"
+             "（doctor 中「系统不调用评测工具」通过），并在每份计分需求上都运行过，否则评测分为 0。")
     for p in design[1]:
         warn(p)
     if not doctor_ok:
         warn("doctor 有未通过的检查，运行 `uv run ldsdt doctor` 查看。")
+    if gateway_busy:
+        warn("评测开始时课程网关繁忙（doctor 的 Qwen 接口检查超时），这一项没有扣分。如果系统运行也因此超时或出错，"
+             "请过一段时间重新运行 `uv run ldsdt grade lab" + str(lab) + "`，以最后一次提交为准。")
     if lab == 0 and not result["breakdown"].get("collect"):
-        warn("还没有成功收集到会话：用自己的辅助工具在本仓库中工作后，运行 `uv run ldsdt collect --week 1`。")
+        warn(f"「会话收集」还没有得分：需要{check_collect(root)[1]}。在本仓库中这样工作后，"
+             "运行 `uv run ldsdt collect --week 1`，再重新评测。")
     info(f"详细结果：runs/lab{lab}/grade.json（加 -v 显示问题与失败场景）")
     return 0 if result["gate_passed"] else 1
 
@@ -339,5 +374,13 @@ def try_run(args) -> int:
     print_task(t, args.verbose)
     for k, v in t["points"].items():
         info(f"  {k:<20}{v:>7.2f}")
+    used = find_kit_usage(root)
+    if used:
+        warn(f"以下文件引用了课程工具包 ldsdt_kit：{', '.join(used[:5])}。学生系统不得导入或调用评测工具，"
+             "正式评测时门槛不通过，评测分为 0。")
+    if t["outcome"] != "completed":
+        err = str((read_json(run_dir / "run.json", {}) or {}).get("error") or "").strip().splitlines()
+        if err:
+            info(f"      出错信息：{err[-1][:300]}")
     info(f"详细结果：runs/try/{req.id}/result.json（不计分）")
     return 0

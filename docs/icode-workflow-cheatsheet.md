@@ -5,7 +5,8 @@
 ## 1. 文件与入口
 
 - 工作流文件：`.chrys/workflows/ldsdt/ldsdt.py`。同一文件夹里的其他 `.py` 可以用 `from helpers import f` 导入（不能用相对导入），其他文件用 `Path(__file__).parent / "prompts" / "x.md"` 读取。
-- 文件头的脚本元数据让 Python 节点使用仓库的 `.venv`（Python 3.12，能 import `ldsdt_kit`），不要删。
+- 文件头的脚本元数据让 Python 节点使用仓库的 `.venv`（Python 3.12，可以用 `pyyaml`），不要删。
+- **系统不得导入或调用课程工具包 `ldsdt_kit`**（包括运行 `ldsdt` 命令）：评测运行时导入会直接失败，`doctor` 也会检查，违反时评测分为 0。需要的解析、校验请在自己的代码里实现。
 - 模块顶层必须有 `workflow = wf.build()`。顶层只放导入、函数定义和构建代码。
 - 检查能否加载：`icode-zju workflow validate .chrys/workflows/ldsdt/ldsdt.py`（`uv run ldsdt doctor` 也会检查）。
 
@@ -77,23 +78,10 @@ wf.chain(prep, loop, next_step)
 
 第一轮入口收到循环节点的输入，之后每轮收到上一轮出口的输出。达到 `max_iterations` 仍未结束时默认继续往下走（`on_exhausted="continue"`）。
 
-## 6. 课程工具包提供的检查函数
+## 6. 自查产物
 
-Python 节点里可以直接调用，返回问题列表（空表示通过），适合做「校验失败就把问题反馈给智能体重做」：
-
-```python
-from ldsdt_kit import checks
-from ldsdt_kit.acceptance import evaluate
-from ldsdt_kit.reqdoc import parse
-
-checks.fr_list(run_dir)           # Lab 0：warmup/fr-list.json
-checks.spec(run_dir)              # Lab 1：spec/index.json、spec/interface.json、spec/FORMAT.md
-checks.manifest(run_dir)          # Lab 2：design/manifest.json
-checks.conformance(run_dir)       # Lab 3：repo/ 是否实现了 manifest 中的模块与签名
-report = evaluate(run_dir / "repo", parse(run_dir / "input.md"))   # Lab 3：运行需求中的验收场景
-checks.scenarios(run_dir / "tests" / "scenarios.yaml")             # Lab 4：生成的场景格式
-checks.report(run_dir)            # Lab 4：tests/report.json
-```
+- **在工作流外**：用 `uv run ldsdt try <需求文档> --lab <N> -v` 运行系统并按 Lab N 的评分项检查，问题会显示在终端，详细结果在 `runs/try/<id>/result.json`。
+- **在工作流内**：不能调用课程工具包，校验要自己写。常见做法是在智能体节点后接一个 Python 节点：读取产物、用 `json` / `yaml` 解析、检查必需字段，把发现的问题写进回复文字，再用 `wf.loop` 交给智能体重做（见第 5 节）。产物的格式要求见课程网站各 Lab 页面。
 
 ## 7. 智能体配置（`agents/*.yaml`）
 

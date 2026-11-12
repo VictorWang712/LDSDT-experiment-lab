@@ -48,6 +48,9 @@ iCode 在 macOS 上用 zsh 或 bash 运行命令，在 Windows 上用 PowerShell
 - 在智能体的 `instructions` 里写清楚：只用 `python` 运行脚本，不要用 `cd`、不要写完整路径、不要用 Shell 专有语法，文件操作用文件工具；
 - 智能体被拦下时会收到 `command blocked — Command '...' not in whitelist` 的提示，通常会自己换一种写法，但每次都要多花一轮模型调用。在节点的会话记录中看到很多这样的提示时，就该改提示词了。
 
-注意：iCode 不能限制写文件的路径，提示词里要写清楚只能写哪个目录。
+注意：
+
+- iCode 不能限制写文件的路径，提示词里要写清楚只能写哪个目录。
+- 智能体和工作流都不得调用课程工具包：不要让智能体运行 `ldsdt` 命令，也不要导入 `ldsdt_kit`。评测运行时这样做会直接失败。
 
 完整字段（`sub_agents`、`skills`、`compaction` 等）见 iCode 文档 `docs/zh-Hans/reference/agent-profile.md`。

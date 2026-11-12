@@ -369,3 +369,138 @@ def test_ensure_api_key(tmp_path, monkeypatch):
     empty.chmod(0o755)
     assert common.ensure_api_key(shell=str(empty)) == ""
     assert config.API_KEY_ENV_VAR not in common.os.environ
+
+
+def test_ensure_api_key_windows_registry(monkeypatch):
+    """Windows 上 AiWork 执行的命令不继承用户环境变量：从注册表补读。"""
+    import sys as _sys
+    import types
+    from ldsdt_kit import common
+
+    store = {"Environment": {config.API_KEY_ENV_VAR: ("from-registry-5678", 1)}}
+
+    class _Key:
+        def __init__(self, sub):
+            self.sub = sub
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    fake = types.SimpleNamespace(
+        HKEY_CURRENT_USER=1, HKEY_LOCAL_MACHINE=2, REG_SZ=1, REG_EXPAND_SZ=2,
+        OpenKey=lambda hive, sub: _Key(sub),
+    )
+
+    def query(key, name):
+        try:
+            return store[key.sub][name]
+        except KeyError:
+            raise OSError("not found")
+
+    fake.QueryValueEx = query
+    monkeypatch.setitem(_sys.modules, "winreg", fake)
+    monkeypatch.setattr(common, "IS_WINDOWS", True)
+    monkeypatch.delenv(config.API_KEY_ENV_VAR, raising=False)
+    assert common.ensure_api_key() == "registry"
+    assert common.os.environ[config.API_KEY_ENV_VAR] == "from-registry-5678"
+
+    monkeypatch.delenv(config.API_KEY_ENV_VAR)
+    store.clear()
+    assert common.ensure_api_key() == ""
+    assert config.API_KEY_ENV_VAR not in common.os.environ
+
+
+def test_strip_extended_prefix(tmp_path):
+    from ldsdt_kit.common import is_within, strip_extended_prefix
+    assert strip_extended_prefix("\\\\?\\D:\\work\\G98-aiwork") == "D:\\work\\G98-aiwork"
+    assert strip_extended_prefix("\\\\?\\UNC\\srv\\share\\x") == "\\\\srv\\share\\x"
+    assert strip_extended_prefix("D:\\work") == "D:\\work"
+    assert strip_extended_prefix("/Users/x/repo") == "/Users/x/repo"
+    sub = tmp_path / "a" / "b"
+    sub.mkdir(parents=True)
+    assert is_within(sub, tmp_path) and not is_within(tmp_path, sub)
+
+
+def test_find_kit_usage(tmp_path):
+    import subprocess as sp
+    from ldsdt_kit.common import find_kit_usage
+    sp.run(["git", "init", "-q", str(tmp_path)], check=True)
+    wf = tmp_path / ".chrys" / "workflows" / "ldsdt"
+    wf.mkdir(parents=True)
+    (wf / "ldsdt.py").write_text('"""不得导入或调用课程工具包 ldsdt_kit。"""\nfrom chrys.workflows import WorkflowBuilder\n')
+    (tmp_path / "agents").mkdir()
+    (tmp_path / "agents" / "README.md").write_text("不得导入 ldsdt_kit\n")
+    (tmp_path / "agents" / "ok.yaml").write_text("instructions: 不要使用 ldsdt_kit 或 ldsdt 命令\n")
+    (tmp_path / "ldsdt_kit").mkdir()
+    (tmp_path / "ldsdt_kit" / "x.py").write_text("import ldsdt_kit\n")
+    assert find_kit_usage(tmp_path) == []
+    (wf / "ldsdt.py").write_text("from ldsdt_kit.reqdoc import parse\n")
+    (tmp_path / "agents" / "warmup.yaml").write_text("instructions: 运行 python -c 'import ldsdt_kit'\n")
+    (tmp_path / "helper.py").write_text("import importlib; importlib.import_module('ldsdt_kit.reqdoc')\n")
+    assert find_kit_usage(tmp_path) == [".chrys/workflows/ldsdt/ldsdt.py", "agents/warmup.yaml", "helper.py"]
+
+
+def test_import_guard():
+    """评测运行时（LDSDT_SYSTEM_RUN=1）学生系统导入 ldsdt_kit 直接失败。"""
+    import os as _os
+    import subprocess as sp
+    import sys as _sys
+    env = {**_os.environ, config.SYSTEM_RUN_ENV: "1"}
+    r = sp.run([_sys.executable, "-c", "import ldsdt_kit.reqdoc"], cwd=ROOT, env=env, capture_output=True, text=True)
+    assert r.returncode != 0 and "不得导入" in r.stderr
+    env.pop(config.SYSTEM_RUN_ENV)
+    assert sp.run([_sys.executable, "-c", "import ldsdt_kit.reqdoc"], cwd=ROOT, env=env).returncode == 0
+
+
+def test_check_collect_roles(tmp_path):
+    import subprocess as sp
+    sp.run(["git", "init", "-q", str(tmp_path)], check=True)
+    log = tmp_path / ".ldsdt" / "collect-log.jsonl"
+    log.parent.mkdir()
+
+    def setup(url, *entries):
+        sp.run(["git", "remote", "remove", "origin"], cwd=tmp_path, capture_output=True)
+        sp.run(["git", "remote", "add", "origin", url], cwd=tmp_path, check=True)
+        log.write_text("".join(json.dumps(e) + "\n" for e in entries))
+        return grade.check_collect(tmp_path)[0]
+
+    only_workflow = {"sessions": {"icode": 3, "aiwork": 0}, "icode_chat": 0}
+    with_aiwork = {"sessions": {"icode": 3, "aiwork": 1}, "icode_chat": 0}
+    with_chat = {"sessions": {"icode": 4, "aiwork": 0}, "icode_chat": 1}
+    assert grade.repo_role(tmp_path) is None
+    assert not setup("https://github.com/u/G98-aiwork.git", only_workflow)
+    assert not setup("https://github.com/u/G98-aiwork.git", with_chat)
+    assert setup("git@github.com:u/G98-aiwork.git", only_workflow, with_aiwork)
+    assert not setup("https://github.com/u/G98-icode", only_workflow, with_aiwork)
+    assert setup("https://github.com/u/G98-icode", with_chat)
+    assert setup("https://github.com/u/other.git", with_aiwork)   # 角色未知：任一辅助工具的会话即可
+    assert not setup("https://github.com/u/other.git", only_workflow)
+    (tmp_path / ".ldsdt" / "local.json").write_text(json.dumps({"pseudonym": "G98-B"}))
+    assert grade.repo_role(tmp_path) == "B" and not setup("https://github.com/u/other.git", with_aiwork)
+
+
+def test_ping_busy_does_not_fail(monkeypatch):
+    from ldsdt_kit import doctor
+    calls = []
+
+    def fake(key, timeout):
+        calls.append(1)
+        return "busy", "45 秒内没有响应"
+
+    monkeypatch.setattr(doctor, "_ping_once", fake)
+    status, detail = doctor._ping_qwen("k", retry_wait=0)
+    assert status == "busy" and len(calls) == 2 and "uv run ldsdt doctor" in detail
+    monkeypatch.setattr(doctor, "_ping_once", lambda k, t: ("fail", "HTTP 401 密钥无效"))
+    assert doctor._ping_qwen("k", retry_wait=0)[0] == "fail"
+
+
+def test_collect_local_time():
+    from ldsdt_kit.collect import local_time
+    from datetime import datetime
+    got = datetime.fromisoformat(local_time("2026-11-11T03:40:50.042013+00:00"))
+    assert got.utcoffset() == datetime.now().astimezone().utcoffset()
+    assert got.timestamp() == datetime.fromisoformat("2026-11-11T03:40:50+00:00").timestamp()
+    assert local_time("") == ""

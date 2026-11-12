@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 
-KIT_VERSION = "0.3.7"
+KIT_VERSION = "0.3.8"
 MIN_ICODE_VERSION = (0, 35, 2)
 # 课程统一使用浙大课程特供版 iCode（命令名 icode-zju，版本号带 +zju 后缀）。
 ICODE_COMMAND = "icode-zju"
@@ -28,6 +28,8 @@ MODEL_PROFILE_NAME = "ldsdt-qwen"
 
 # ---- 学生系统 ----
 WORKFLOW_ID = "ldsdt"
+# 评测运行时为 iCode 设置的环境变量；学生系统在此时导入 ldsdt_kit 会直接失败（见 ldsdt_kit/__init__.py）。
+SYSTEM_RUN_ENV = "LDSDT_SYSTEM_RUN"
 AGENT_PREFIX = "ldsdt-"
 
 # 子任务：Lab 0 环境与热身工作流；Lab 1–4 依次为需求分析、设计、实现、测试模块。
